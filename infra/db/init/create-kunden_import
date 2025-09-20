@@ -1,0 +1,29 @@
+DROP TABLE IF EXISTS kunden_import;
+
+CREATE TABLE IF NOT EXISTS kunden_import (
+  id                 bigserial PRIMARY KEY,
+  import_id          bigint        NOT NULL,
+  imported_at        timestamptz   NOT NULL,
+  imported_by        text          NOT NULL,
+  kunde              text,
+  strasse            text,
+  plz                text,
+  ort                text,
+  telefon            text,
+  mobil              text,
+  geburtstag         text,
+  kennung            text,
+  start              text,
+  ende               text,
+  auftraege          text,
+  serviceberater     text,
+  besuchrhythmus    text,
+  qs_besuch_datum    text,
+  qs_besuch_art      text,
+  qs_besuch_historik text,
+  qs_besuch_hinweis_1 text,
+  qs_besuch_hinweis_2 text
+);
+
+CREATE INDEX IF NOT EXISTS idx_customer_imports_import_id
+  ON kunden_import(import_id);

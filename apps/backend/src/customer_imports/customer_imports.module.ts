@@ -8,9 +8,11 @@ import { ImportValidationService } from './services/import-validation.service';
 import { StagingWriterService } from './services/staging-writer.service';
 import { CustomerImportsService } from './services/customer_imports.service';
 import { CustomerImportsController } from './customer_imports.controller';
+import { CustomerQueryService } from 'src/customer/services/customer-query.service';
+import { CustomerModule } from 'src/customer/customer.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CustomerImport])],
+  imports: [TypeOrmModule.forFeature([CustomerImport]), CustomerModule],
   controllers: [CustomerImportsController],
   providers: [
     ExcelReaderService,
@@ -19,6 +21,5 @@ import { CustomerImportsController } from './customer_imports.controller';
     StagingWriterService,
     CustomerImportsService,
   ],
-  exports: [CustomerImportsService],
 })
 export class CustomerImportsModule {}

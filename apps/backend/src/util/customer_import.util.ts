@@ -35,7 +35,7 @@ export function normalizeKey(k: any): string {
     .trim();
 }
 
-export const toStr = (v: any) => String(v ?? '').trim();
+export const toStr = (v: any) => String(v ?? ''); //.trim();
 export const toStrOrNull = (v: any) => {
   const x = toStr(v);
   return x.length ? x : null;

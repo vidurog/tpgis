@@ -15,7 +15,27 @@ export class ExcelReaderService {
       sharedStrings: 'cache',
     });
 
-    let header: string[] = [];
+    const header: string[] = [
+      '',
+      'kunde',
+      'strasse',
+      'plz',
+      'ort',
+      'telefon',
+      'mobil',
+      'geburtstag',
+      'kennung',
+      'start',
+      'ende',
+      'auftraege',
+      'serviceberater',
+      'besuchrhythmus',
+      'qs_besuch_datum',
+      'qs_besuch_art',
+      'qs_besuch_historik',
+      'qs_besuch_hinweis_1',
+      'qs_besuch_hinweis_2',
+    ];
 
     for await (const ws of wb) {
       let rowIndex = 0;
@@ -23,10 +43,7 @@ export class ExcelReaderService {
       for await (const row of ws) {
         rowIndex++;
         const raw = row.values as any[]; // exceljs is 1-basiert
-        if (rowIndex === 1) {
-          header = raw.map(normCell);
-          continue;
-        }
+        if (rowIndex <= 2) continue; // first two lines are Headers
 
         const values = raw.map(normCell);
         const rec: Record<string, any> = {};
@@ -34,6 +51,7 @@ export class ExcelReaderService {
         for (let i = 1; i < header.length; i++) {
           rec[header[i]] = values[i] ?? null; //TODO
         }
+        console.log(rec);
         yield rec; // WAS PASSIERT HIER
       }
     }

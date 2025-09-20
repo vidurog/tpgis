@@ -60,10 +60,6 @@ export class CustomerImportsService {
     return { seen, staged, failed, importId: String(run.importId) };
   }
 
-  async mergeToCustomers(importId: bigint) {
-    // TODO
-  }
-
   getHello(): string {
     return 'CustomerImport!';
   }
