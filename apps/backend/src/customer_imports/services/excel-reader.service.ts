@@ -49,10 +49,9 @@ export class ExcelReaderService {
         const rec: Record<string, any> = {};
 
         for (let i = 1; i < header.length; i++) {
-          rec[header[i]] = values[i] ?? null; //TODO
+          rec[header[i]] = values[i] ?? null;
         }
-        console.log(rec);
-        yield rec; // WAS PASSIERT HIER
+        yield rec;
       }
     }
     // yield {}; // TODO

@@ -1,72 +1,68 @@
-import {
-  Column,
-  Entity,
-  Index,
-  PrimaryColumn,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'kunde' })
+@Entity({ name: 'kunden' })
 export class Customer {
-  @PrimaryColumn()
-  @Column({ name: 'kundennummer', type: 'text' })
+  @PrimaryColumn({ type: 'text', name: 'kundennummer' })
   kundennummer: string;
 
-  @Column({ name: 'kunde', type: 'text', nullable: true })
-  kunde!: string;
+  @Column({ type: 'text', nullable: true })
+  nachname: string | null;
 
-  @Column({ name: 'strasse', type: 'text', nullable: true })
-  strasse: string;
+  @Column({ type: 'text', nullable: true })
+  vorname: string | null;
 
-  @Column({ name: 'hnr', type: 'text', nullable: true })
-  hnr: number | null;
+  @Column({ type: 'text', nullable: true })
+  strasse: string | null;
 
-  @Column({ name: 'plz', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
+  hnr: string | null;
+
+  @Column({ type: 'text', nullable: true })
   plz: string | null;
 
-  @Column({ name: 'ort', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   ort: string | null;
 
-  @Column({ name: 'telefon', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   telefon: string | null;
 
-  @Column({ name: 'mobil', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   mobil: string | null;
 
-  @Column({ name: 'geburtstag', type: 'text', nullable: true })
-  geburtstag: string | null;
+  @Column({ type: 'date', nullable: true })
+  geburtstag: Date | null;
 
-  @Column({ name: 'kennung', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   kennung: string | null;
 
-  @Column({ name: 'start', type: 'text', nullable: true })
-  start: string | null;
+  @Column({ type: 'date', nullable: true })
+  start: Date | null;
 
-  @Column({ name: 'ende', type: 'text', nullable: true })
-  ende: string | null;
+  @Column({ type: 'date', nullable: true })
+  ende: Date | null;
 
-  @Column({ name: 'auftraege', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   auftraege: string | null;
 
-  @Column({ name: 'serviceberater', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   serviceberater: string | null;
 
-  @Column({ name: 'besuchrhythmus', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   besuchrhythmus: string | null;
 
-  @Column({ name: 'qs_besuch_datum', type: 'text', nullable: true })
-  qs_besuch_datum: string | null;
+  @Column({ type: 'date', nullable: true })
+  qs_besuch_datum: Date | null;
 
-  @Column({ name: 'qs_besuch_art', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   qs_besuch_art: string | null;
 
-  @Column({ name: 'qs_besuch_historik', type: 'text', nullable: true })
-  qs_besuch_historik: string | null;
+  @Column({ type: 'date', nullable: true })
+  qs_besuch_historik: Date | null;
 
-  @Column({ name: 'qs_besuch_hinweis_1', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   qs_besuch_hinweis_1: string | null;
 
-  @Column({ name: 'qs_besuch_hinweis_2', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   qs_besuch_hinweis_2: string | null;
 
   @Index()
@@ -79,38 +75,36 @@ export class Customer {
   })
   geom: string | null; // ST_SetSRID(ST_MakePoint(lon,lat),4326)
 
-  // Eigene Tabelle Planung
-  @Column({ name: 'planmonat', type: 'date', nullable: true })
-  planmonat: string | null;
+  @Column({ type: 'date', nullable: true })
+  planmonat: Date | null; // immer 1. des Monats
 
-  // Eigene Tabelle Planung
-  @Column({ name: 'termin', type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   termin: Date | null;
 
-  // Eigene Tabelle Planung
-  @Column({ name: 'termindauer_min', type: 'integer', nullable: true })
+  @Column({ type: 'integer', nullable: true })
   termindauer_min: number | null;
 
-  @Column({ name: 'terminstatus', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   terminstatus: string | null;
 
-  // Eigene Tabelle Planung
-  @Column({ name: 'termingrund', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   termingrund: string | null;
 
-  // Eigene Tabelle Planung
-  @Column({ name: 'reihenfolge_nr', type: 'integer', nullable: true })
+  @Column({ type: 'integer', nullable: true })
   reihenfolge_nr: number | null;
 
-  @Column({ name: 'parken', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   parken: string | null;
 
-  @Column({ name: 'bemerkung', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   bemerkung: string | null;
 
-  @Column({ name: 'datenfehler', type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: false })
   datenfehler: boolean;
 
-  @Column({ name: 'begruendung_datenfehler', type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true })
   begruendung_datenfehler: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  aktiv: boolean;
 }

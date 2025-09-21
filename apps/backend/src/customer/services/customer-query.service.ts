@@ -29,29 +29,35 @@ export class CustomerQueryService {
     const rows = await this.importRepo
       .createQueryBuilder()
       // .where(`insertedId = ${import_id}`)
-      .limit(1)
+      // .limit(1) // TEST PURPOSE
       .getMany();
     if (!rows) throw Error('No data on this import_id');
 
     for await (const [i, row] of rows.entries()) {
       let customer: CustomerDTO = {
         kundennummer: '000',
-        kunde: row.kunde!,
+        nachname: row.kunde!,
+        vorname: null,
         strasse: row.strasse,
+        hnr: null,
         plz: row.plz,
         ort: row.ort,
         telefon: row.telefon,
         mobil: row.mobil,
-        geburtstag: row.geburtstag,
+        geburtstag: row.geburtstag ? new Date(row.geburtstag) : null,
         kennung: row.kennung,
-        start: row.start,
-        ende: row.ende,
+        start: row.start ? new Date(row.start) : null,
+        ende: row.ende ? new Date(row.ende) : null,
         auftraege: row.auftraege,
         serviceberater: row.serviceberater,
         besuchrhythmus: row.besuchrhythmus,
-        qs_besuch_datum: row.qs_besuch_datum,
+        qs_besuch_datum: row.qs_besuch_datum
+          ? new Date(row.qs_besuch_datum)
+          : null,
         qs_besuch_art: row.qs_besuch_art,
-        qs_besuch_historik: row.qs_besuch_historik,
+        qs_besuch_historik: row.qs_besuch_historik
+          ? new Date(row.qs_besuch_historik)
+          : null,
         qs_besuch_hinweis_1: row.qs_besuch_hinweis_1,
         qs_besuch_hinweis_2: row.qs_besuch_hinweis_2,
         geom: null,
@@ -67,38 +73,68 @@ export class CustomerQueryService {
         begruendung_datenfehler: null,
         aktiv: true, // Logik TODO
       };
+      // console.log('Customer: ', customer);
 
-      customer = this.normService.normalizeDTO(customer);
-      customer.kundennummer = this.normService.createKundennummer(
-        customer.kunde,
+      // Test;
+      // customer.besuchrhythmus = '3 Monate';
+
+      [customer.vorname, customer.nachname] = this.normService.normalizeName(
+        customer.nachname,
+      );
+      [customer.strasse, customer.hnr] = this.normService.normalizeStrasse(
         customer.strasse!,
+      );
+
+      customer.kundennummer = this.normService.createKundennummer(
+        customer.nachname!,
+        customer.strasse!,
+        customer.hnr!,
       );
       customer.planmonat = this.normService.createPlanmonat(
         customer.qs_besuch_historik,
         customer.besuchrhythmus,
       );
 
-      customer.geom = await this.geomService.findGeom(customer);
+      const point = await this.geomService.findGeom(
+        customer.strasse,
+        customer.hnr!,
+        customer.plz!,
+        customer.ort!,
+      );
+      customer.geom = point ?? null;
 
-      const datenfehler: string | null =
-        this.validateService.validate(customer);
+      const datenfehler: string | null = this.validateService.validate(
+        customer,
+        row.strasse!,
+      );
 
       if (datenfehler) {
         customer.datenfehler = true;
         customer.begruendung_datenfehler = datenfehler;
+      } else {
+        customer.datenfehler = false;
+        customer.begruendung_datenfehler = null;
       }
 
       const values: Record<string, any> = {};
       for (const [k, v] of Object.entries(customer)) {
-        if (v !== null && v !== undefined) {
-          values[k] = v;
-        }
+        if (k === 'geom' && point) continue;
+        values[k] = v;
       }
+
+      if (point) {
+        values.geom = () =>
+          `ST_SetSRID(ST_MakePoint(${point.lon}, ${point.lat}), 4326)`;
+      }
+
+      // console.log('values\n', values);
 
       await this.customerRepo.upsert(
         values as QueryDeepPartialEntity<Customer>,
         { conflictPaths: ['kundennummer'], skipUpdateIfNoValuesChanged: true },
       );
     }
+
+    // TODO set aktiv = false for all not in seen
   }
 }

@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CustomerImport } from './customer_imports/customer_import.entity';
 import { CustomerImportsModule } from './customer_imports/customer_imports.module';
+import { Customer } from './customer/customer.entity';
 
 @Module({
   imports: [
@@ -18,8 +19,8 @@ import { CustomerImportsModule } from './customer_imports/customer_imports.modul
         username: cs.get('DB_USER'),
         password: cs.get('DB_PASS'),
         database: cs.get('DB_NAME'),
-        entities: [CustomerImport],
-        synchronize: true, // für DEV ok: true, in PROD: false + Migrations! s
+        entities: [CustomerImport, Customer],
+        synchronize: false, // für DEV ok: true, in PROD: false + Migrations! s
       }),
     }),
     CustomerImportsModule,

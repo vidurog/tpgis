@@ -6,11 +6,13 @@ import { CustomerNormalization } from './services/customer-normalization.service
 import { CustomerQueryService } from './services/customer-query.service';
 import { CustomerGeoService } from './services/customer-geo.service';
 import { CustomerValidationService } from './services/customer-validation.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CustomerImport]),
     TypeOrmModule.forFeature([Customer]),
+    HttpModule,
   ],
   controllers: [],
   providers: [

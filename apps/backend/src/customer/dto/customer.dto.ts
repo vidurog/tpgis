@@ -1,33 +1,38 @@
 import { Geometry } from 'typeorm';
+import { CUSTOMER_TERMINSTATUS } from './customer.terminstatus';
+import { CUSTOMER_TERMINGRUND } from './customer.termingrund';
+import { CUSTOMER_PARKEN } from './customer.parken';
 
 export type CustomerDTO = {
   kundennummer: string;
-  kunde: string;
+  nachname: string;
+  vorname: string | null;
   strasse: string | null;
+  hnr: string | null;
   plz: string | null;
   ort: string | null;
   telefon: string | null;
   mobil: string | null;
-  geburtstag: string | null;
+  geburtstag: Date | null;
   kennung: string | null;
-  start: string | null;
-  ende: string | null;
+  start: Date | null;
+  ende: Date | null;
   auftraege: string | null;
   serviceberater: string | null;
   besuchrhythmus: string | null;
-  qs_besuch_datum: string | null;
+  qs_besuch_datum: Date | null;
   qs_besuch_art: string | null;
-  qs_besuch_historik: string | null;
+  qs_besuch_historik: Date | null;
   qs_besuch_hinweis_1: string | null;
   qs_besuch_hinweis_2: string | null;
-  geom: Geometry | null;
-  planmonat: string | null;
-  termin: string | null; // Date
+  geom: { lon: number; lat: number } | null;
+  planmonat: Date | null;
+  termin: Date | null; // Date
   termindauer_min: number | null;
-  terminstatus: string | null;
-  termingrund: string | null;
+  terminstatus: CUSTOMER_TERMINSTATUS | null;
+  termingrund: CUSTOMER_TERMINGRUND | null;
   reihenfolge_nr: number | null;
-  parken: string | null;
+  parken: CUSTOMER_PARKEN | null;
   bemerkung: string | null;
   datenfehler: boolean;
   begruendung_datenfehler: string | null;
