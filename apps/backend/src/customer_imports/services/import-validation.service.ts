@@ -47,7 +47,6 @@ export class ImportValidationService {
     return errors.length ? { ok: false, errors } : { ok: true };
   }
 
-  // OPTIONAL
   coerce(dto: StagingDto): StagingDto {
     return {
       ...dto,

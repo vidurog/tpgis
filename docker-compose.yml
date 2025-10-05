@@ -9,8 +9,8 @@ services:
       POSTGRES_PASSWORD: app
     ports:
       - "5432:5432"
-    volumes:
-      - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+ #   volumes:
+  #    - ./infra/db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d tpgis_healthcare"]
       interval: 5s

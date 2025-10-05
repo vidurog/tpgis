@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CustomerImport } from 'src/customer_imports/customer_import.entity';
+import { CustomerImport } from 'src/customer_imports/customer_imports.entity';
 import { Customer } from './customer.entity';
 import { CustomerNormalization } from './services/customer-normalization.service';
-import { CustomerQueryService } from './services/customer-query.service';
+import { CustomerWriterService } from './services/customer_writer.service';
 import { CustomerGeoService } from './services/customer-geo.service';
 import { CustomerValidationService } from './services/customer-validation.service';
 import { HttpModule } from '@nestjs/axios';
+import { CustomerMergeService } from './customer-merge.service';
+import { BuildingMatchService } from './services/building-match.service';
+import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 
 @Module({
   imports: [
@@ -16,11 +19,14 @@ import { HttpModule } from '@nestjs/axios';
   ],
   controllers: [],
   providers: [
-    CustomerQueryService,
+    CustomerWriterService,
     CustomerNormalization,
     CustomerGeoService,
     CustomerValidationService,
+    CustomerMergeService,
+    BuildingMatchService,
+    CustomerImportsRunsService,
   ],
-  exports: [CustomerQueryService],
+  exports: [CustomerMergeService],
 })
 export class CustomerModule {}

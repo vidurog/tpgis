@@ -10,6 +10,7 @@ export type CustomerDTO = {
   strasse: string | null;
   hnr: string | null;
   plz: string | null;
+  adz: string | null;
   ort: string | null;
   telefon: string | null;
   mobil: string | null;
@@ -37,4 +38,5 @@ export type CustomerDTO = {
   datenfehler: boolean;
   begruendung_datenfehler: string | null;
   aktiv: boolean;
+  gebref_oid: string | null;
 };

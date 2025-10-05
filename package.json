@@ -2,6 +2,7 @@
   "dependencies": {
     "@types/multer": "^2.0.0",
     "exceljs": "^4.4.0",
+    "libphonenumber-js": "^1.12.18",
     "multer": "^2.0.2"
   }
 }

@@ -10,13 +10,13 @@ import { CustomerImportsService } from './services/customer_imports.service';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'node:path';
-import { CustomerQueryService } from 'src/customer/services/customer-query.service';
+import { CustomerMergeService } from 'src/customer/customer-merge.service';
 
 @Controller('customer-imports')
 export class CustomerImportsController {
   constructor(
     private readonly importService: CustomerImportsService,
-    private readonly customerService: CustomerQueryService,
+    private readonly mergeService: CustomerMergeService,
   ) {}
 
   @Post('xlsx') // http Endpunkt
@@ -38,14 +38,8 @@ export class CustomerImportsController {
     return this.importService.importXlsxToStaging(full, run);
   }
 
-  /*
-  Morgen
-  */
-  // @Post(':importId/merge')
-  @Get()
-  // async merge(@Param('importId') importId: string) {
-  async merge() {
-    return this.customerService.mergeToCustomer(BigInt(1));
-    // BigInt(importId));
+  @Post(':importId/merge')
+  async merge(@Param('importId') importId: string) {
+    return this.mergeService.mergeToCustomer(importId);
   }
 }

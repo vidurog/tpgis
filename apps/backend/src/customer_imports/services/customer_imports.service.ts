@@ -5,6 +5,7 @@ import { ImportMappingService } from './import-mapping.service';
 import { ImportValidationService } from './import-validation.service';
 import { StagingWriterService } from './staging-writer.service';
 import { StagingDto } from '../dto/stage-import.dto';
+import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 
 type ImportRun = { importId: string; user: string };
 const BATCH_SIZE = 200;
@@ -16,6 +17,7 @@ export class CustomerImportsService {
     private readonly mapper: ImportMappingService,
     private readonly validator: ImportValidationService,
     private readonly writer: StagingWriterService,
+    private readonly runService: CustomerImportsRunsService,
   ) {}
 
   async importXlsxToStaging(filePath: string, run: ImportRun) {
@@ -26,6 +28,7 @@ export class CustomerImportsService {
     let errors: string[] = [];
     let batch: StagingDto[] = [];
 
+    // 1) Batch über WriterService in DB schreiben
     const flush = async () => {
       if (!batch.length) return;
       await this.writer.bulkInsert(batch);
@@ -33,6 +36,12 @@ export class CustomerImportsService {
       batch = [];
     };
 
+    // 2) Kunden_import DTO setzen -> zu batch zufügen
+    // ReaderService -> row
+    // row -> MappingService -> dto
+    // dto -> ValidationService -> dto
+    // dto -> batch
+    // batch -> flush
     for await (const rawRow of this.reader.rows(filePath)) {
       seen++;
 
@@ -57,10 +66,14 @@ export class CustomerImportsService {
     await flush();
     // TODO errors handling
     console.error(errors);
-    return { seen, staged, failed, importId: String(run.importId) };
-  }
 
-  getHello(): string {
-    return 'CustomerImport!';
+    // 3) Add Import to ImportRun Database
+    this.runService.addImport(
+      String(run.importId),
+      imported_at,
+      run.user,
+      staged,
+    );
+    return { seen, staged, failed, importId: String(run.importId) };
   }
 }

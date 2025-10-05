@@ -9,13 +9,12 @@ import {
 } from 'src/util/customer_import.util';
 
 type MetaMapping = {
-  importId: string | bigint;
+  importId: string;
   imported_at: Date;
   imported_by: string;
 };
 
 // ColumnMap festlegen
-// TODO Brauche ich aliasses?
 const COLUMN_MAP: ColumnMap = {
   // Stammdaten
   kunde: {

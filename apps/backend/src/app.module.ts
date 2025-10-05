@@ -3,9 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CustomerImport } from './customer_imports/customer_import.entity';
+import { CustomerImport } from './customer_imports/customer_imports.entity';
 import { CustomerImportsModule } from './customer_imports/customer_imports.module';
 import { Customer } from './customer/customer.entity';
+import { CustomerImportRuns } from './customer_imports_runs/customer_imports_runs.entity';
 
 @Module({
   imports: [
@@ -19,8 +20,9 @@ import { Customer } from './customer/customer.entity';
         username: cs.get('DB_USER'),
         password: cs.get('DB_PASS'),
         database: cs.get('DB_NAME'),
-        entities: [CustomerImport, Customer],
-        synchronize: false, // für DEV ok: true, in PROD: false + Migrations! s
+        entities: [CustomerImport, Customer, CustomerImportRuns],
+        synchronize: false,
+        migrationsRun: true,
       }),
     }),
     CustomerImportsModule,

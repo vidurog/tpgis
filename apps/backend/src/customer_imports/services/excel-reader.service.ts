@@ -1,20 +1,17 @@
 // apps/backend/src/imports/excel-reader.service.ts
 import { Injectable } from '@nestjs/common';
 import * as Excel from 'exceljs';
-import { normCell } from 'src/util/customer_import.util';
 
 @Injectable()
 export class ExcelReaderService {
-  async detectHeaders(filePath: string): Promise<string[]> {
-    return []; // TODO
-  }
-
+  // 0) Generator Funktion um yield zu benutzen
   async *rows(filePath: string): AsyncGenerator<Record<string, any>> {
     const wb = new Excel.stream.xlsx.WorkbookReader(filePath, {
       entries: 'emit',
       sharedStrings: 'cache',
     });
 
+    // 1) Header der Excel Datei
     const header: string[] = [
       '',
       'kunde',
@@ -37,6 +34,20 @@ export class ExcelReaderService {
       'qs_besuch_hinweis_2',
     ];
 
+    const normCell = (v: any) => {
+      if (v == null) return null;
+      if (typeof v === 'object') {
+        if ('result' in v) return normCell(v.result); // Formel → Ergebnis
+        if ('text' in v) return String(v.text);
+        if ('richText' in v) return v.richText.map((r: any) => r.text).join('');
+      }
+      return v instanceof Date
+        ? v
+        : typeof v === 'number'
+          ? v
+          : String(v).trim();
+    };
+
     for await (const ws of wb) {
       let rowIndex = 0;
 
@@ -54,7 +65,6 @@ export class ExcelReaderService {
         yield rec;
       }
     }
-    // yield {}; // TODO
   }
 
   async close(filePath: string): Promise<void> {

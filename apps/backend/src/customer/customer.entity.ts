@@ -18,6 +18,9 @@ export class Customer {
   hnr: string | null;
 
   @Column({ type: 'text', nullable: true })
+  adz: string | null;
+
+  @Column({ type: 'text', nullable: true })
   plz: string | null;
 
   @Column({ type: 'text', nullable: true })
@@ -107,4 +110,7 @@ export class Customer {
 
   @Column({ type: 'boolean', default: true })
   aktiv: boolean;
+
+  @Column({type: 'text', nullable: true})
+  gebref_oid: string | null;
 }
