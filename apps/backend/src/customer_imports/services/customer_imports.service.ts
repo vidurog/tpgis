@@ -7,7 +7,7 @@ import { StagingWriterService } from './staging-writer.service';
 import { StagingDto } from '../dto/stage-import.dto';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 
-type ImportRun = { importId: string; user: string };
+type ImportRun = { import_id: string; user: string };
 const BATCH_SIZE = 200;
 
 @Injectable()
@@ -46,7 +46,7 @@ export class CustomerImportsService {
       seen++;
 
       const dto0 = this.mapper.mapToStaging(rawRow, {
-        importId: run.importId,
+        import_id: run.import_id,
         imported_at: imported_at,
         imported_by: run.user,
       });
@@ -69,11 +69,11 @@ export class CustomerImportsService {
 
     // 3) Add Import to ImportRun Database
     this.runService.addImport(
-      String(run.importId),
+      String(run.import_id),
       imported_at,
       run.user,
       staged,
     );
-    return { seen, staged, failed, importId: String(run.importId) };
+    return { seen, staged, failed, import_id: String(run.import_id) };
   }
 }

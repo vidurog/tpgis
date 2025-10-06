@@ -34,7 +34,7 @@ export class CustomerImportsController {
   )
   async importXlsx(@UploadedFile() file: Express.Multer.File) {
     const full = path.resolve(file.path);
-    const run = { importId: String(Date.now()), user: 'leon' }; // später aus Auth
+    const run = { import_id: String(Date.now()), user: 'leon' }; // später aus Auth
     return this.importService.importXlsxToStaging(full, run);
   }
 

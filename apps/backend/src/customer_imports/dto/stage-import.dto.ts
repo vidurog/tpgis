@@ -1,6 +1,6 @@
 // apps/backend/src/imports/imports.types.ts
 export type StagingDto = {
-  importId: string;
+  import_id: string;
   imported_at: Date;
   imported_by: string;
   kunde: string | null;

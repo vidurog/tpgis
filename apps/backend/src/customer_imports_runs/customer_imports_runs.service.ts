@@ -19,7 +19,7 @@ export class CustomerImportsRunsService {
     inserted_rows: number,
   ) {
     const run = await this.runRepo.create({
-      importId: import_id,
+      import_id: import_id,
       imported_at,
       imported_by,
       inserted_rows,
@@ -27,6 +27,6 @@ export class CustomerImportsRunsService {
     await this.runRepo.save(run);
   }
   async mergeImport(import_id: string) {
-    await this.runRepo.update({ importId: import_id }, { merged: true });
+    await this.runRepo.update({ import_id: import_id }, { merged: true });
   }
 }

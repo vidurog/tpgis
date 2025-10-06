@@ -11,6 +11,7 @@ import { CustomerGeoService } from './services/customer-geo.service';
 import { CustomerValidationService } from './services/customer-validation.service';
 import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
+import { CUSTOMER_BESUCHRHYTHMUS } from './dto/customer.besuchrhythmus';
 
 @Injectable()
 export class CustomerMergeService {
@@ -118,8 +119,8 @@ export class CustomerMergeService {
         aktiv: true, // Logik TODO
         gebref_oid: null,
       };
-      // 2.2) Pipeline
 
+      // 2.2) Pipeline
       // ------------------- Normalisieren -------------------
       [customer.vorname, customer.nachname] = this.normService.normalizeName(
         customer.nachname,
@@ -138,6 +139,7 @@ export class CustomerMergeService {
         customer.hnr,
       );
 
+      // customer.besuchrhythmus = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2; // DEBUG
       customer.planmonat = this.normService.createPlanmonat(
         customer.qs_besuch_historik,
         customer.besuchrhythmus,
@@ -175,7 +177,7 @@ export class CustomerMergeService {
       // ------------------- Validieren -------------------
       const datenfehler: string | null = this.validateService.validate(
         customer,
-        row.strasse!,
+        row.strasse!, // Straße aus Import (nicht normalisiert vom Kunden)
       );
 
       if (datenfehler) {
@@ -218,11 +220,6 @@ export class CustomerMergeService {
     // 5) ImportRun merged = true
     this.runService.mergeImport(import_id);
 
-    return {
-      importId: import_id,
-      inserted,
-      updated,
-      total: inserted + updated,
-    };
+    return { import_id, inserted, updated, total: inserted + updated };
   }
 }

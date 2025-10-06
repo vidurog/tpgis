@@ -16,9 +16,9 @@ export class ImportValidationService {
     const errors: ValidationError[] = [];
 
     // Meta Felder müssen ausgefüllt sein
-    if (!dto.importId) {
+    if (!dto.import_id) {
       errors.push({
-        field: 'importId',
+        field: 'import_id',
         message: 'import_id fehlt',
       });
     }
