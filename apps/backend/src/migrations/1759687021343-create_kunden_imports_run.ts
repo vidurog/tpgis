@@ -7,7 +7,7 @@ export class KundenImportsRuns1759687021343 implements MigrationInterface {
             import_id           bigint        PRIMARY KEY,
             imported_at         timestamptz   NOT NULL,
             imported_by         text          NOT NULL,
-            merged              boolean       DEFAULT false
+            merged              boolean       DEFAULT false,
             inserted_rows       int           NOT NULL)`,
     );
   }
