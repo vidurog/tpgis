@@ -3,7 +3,7 @@ import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 @Entity({ name: 'kunden_import_runs' })
 export class CustomerImportRuns {
   @PrimaryColumn({ name: 'import_id', type: 'bigint' })
-  importId!: string;
+  import_id!: string;
 
   @Column({ name: 'imported_at', type: 'timestamptz' })
   imported_at!: Date;

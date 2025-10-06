@@ -9,7 +9,7 @@ import {
 } from 'src/util/customer_import.util';
 
 type MetaMapping = {
-  importId: string;
+  import_id: string;
   imported_at: Date;
   imported_by: string;
 };
@@ -157,7 +157,7 @@ export class ImportMappingService {
 
     // DTO vorbereiten
     const dto: any = {
-      importId: String(meta.importId),
+      import_id: String(meta.import_id),
       imported_at: meta.imported_at,
       imported_by: meta.imported_by,
       kunde: null,

@@ -7,6 +7,7 @@ import { CustomerImport } from './customer_imports/customer_imports.entity';
 import { CustomerImportsModule } from './customer_imports/customer_imports.module';
 import { Customer } from './customer/customer.entity';
 import { CustomerImportRuns } from './customer_imports_runs/customer_imports_runs.entity';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -25,8 +26,10 @@ import { CustomerImportRuns } from './customer_imports_runs/customer_imports_run
         migrationsRun: true,
       }),
     }),
+    // Stellen REST Endpunkte der App zur verfuegung
     CustomerImportsModule,
-  ], // end of imports
+    ReportsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

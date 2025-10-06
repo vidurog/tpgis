@@ -23,7 +23,13 @@ export class CustomerValidationService {
     if (!customer.telefon && !customer.mobil)
       errors.push('Keine Telefon/Mobil Nummer');
     if (!customer.geom) errors.push('Keine Geokodierung');
-    // if (customer.strasse !== rawStrasse) errors.push('Falsche Addressangabe'); TODO
+
+    // Check ob Straße verändert/normalisiert werden musste
+    const ganzeStr =
+      customer.strasse +
+      (customer.hnr ? ' ' + customer.hnr : '') +
+      (customer.adz ?? '');
+    if (ganzeStr !== rawStrasse) errors.push('Addresse geändert');
 
     return errors.length > 0 ? errors.join('\n') : null;
   }
