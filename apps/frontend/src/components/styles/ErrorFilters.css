@@ -1,0 +1,15 @@
+.efilters {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+}
+.efilters__row { display: flex; flex-wrap: wrap; gap: 10px; }
+.efilters__input, .efilters__select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+}
+.efilters__input { flex: 1 1 220px; }
+.efilters__select { flex: 0 0 220px; }

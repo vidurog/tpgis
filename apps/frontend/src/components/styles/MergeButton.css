@@ -1,0 +1,13 @@
+.merge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+}
+
+.merge__info { color: #475569; }
+.merge__info strong { color: #0f172a; }

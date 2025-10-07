@@ -1,0 +1,7 @@
+.import { display: grid; gap: 16px; }
+.import__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.import__table { }
+.import__merge { }
+@media (max-width: 900px) {
+  .import__grid { grid-template-columns: 1fr; }
+}
