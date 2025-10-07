@@ -17,6 +17,7 @@ export default function ExcelUpload({
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [merging, setMerging] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [mergeSuccess, setMergeSuccess] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -72,8 +73,10 @@ export default function ExcelUpload({
       setUpdateSuccess(
         `Upload erfolgreich${import_id ? ` (Import ID #${import_id})` : ""}.`
       );
+      setLoading(false);
 
       // Datei mergen zu kunden
+      setMerging(true);
       const mergeRes = await mergeExcelFile(import_id);
       setMergeSuccess(
         `Merge erfolgreich${
@@ -82,6 +85,7 @@ export default function ExcelUpload({
             : ""
         }.`
       );
+      setMerging(false);
 
       // FE neu rendern
       onUploaded?.({ importId: import_id });
@@ -93,6 +97,7 @@ export default function ExcelUpload({
       setError(String(msg));
     } finally {
       setLoading(false);
+      setMerging(false);
     }
   }
 
@@ -128,7 +133,7 @@ export default function ExcelUpload({
 
       <div className="xl__actions">
         <Button onClick={handleSubmit} disabled={!file || loading}>
-          {loading ? "Lade hoch..." : "Hochladen"}
+          {loading ? "Lade hoch..." : merging ? "Merge Daten" : "Hochladen"}
         </Button>
       </div>
     </div>
