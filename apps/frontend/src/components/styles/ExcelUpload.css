@@ -1,0 +1,56 @@
+.xl {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  background: #fff;
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+
+.xl__label {
+  font-weight: 600;
+}
+
+.xl__input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.xl__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xl__name {
+  display: inline-block;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #334155;
+}
+
+.xl__error {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.xl__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.xl__success {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px;
+}

@@ -86,7 +86,7 @@ export class ReportsHistoryService {
       limit,
       offset,
       orderBy: sortKey,
-      oderDir: sortDir,
+      orderDir: sortDir,
       rows,
     };
   }
