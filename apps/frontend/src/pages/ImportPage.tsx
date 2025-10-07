@@ -21,7 +21,9 @@ export default function ImportPage() {
             setRunsReloadKey((k) => k + 1); // Runs neu laden
           }}
         />
+      </div>
 
+      <div>
         <RunsList
           onSelect={setSelectedRunId}
           reloadKey={runsReloadKey}
@@ -33,12 +35,12 @@ export default function ImportPage() {
         <ImportTable /* später: runId-Filter */ />
       </div>
 
-      <div className="import__merge">
+      {/*<div className="import__merge">
         <MergeButton
           runId={selectedRunId}
           onClick={(id) => console.log("MERGE ausgelöst für Run", id)}
         />
-      </div>
+      </div>*/}
     </section>
   );
 }

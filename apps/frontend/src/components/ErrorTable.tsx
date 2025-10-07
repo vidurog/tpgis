@@ -1,6 +1,5 @@
 import "./styles/ErrorTable.css";
 import type { ErrorRow, ErrorOrderKey } from "../api/errors.api";
-import { useState } from "react";
 
 type SortDir = "ASC" | "DESC";
 
@@ -60,7 +59,6 @@ export default function ErrorTable({
               {toggableHeader("Datenfehler", "datenfehler")}
               {toggableHeader("Error-Class", "error_class")}
               {toggableHeader("Fehleranzahl", "error_count")}
-              <th>Im neusten Import</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +80,6 @@ export default function ErrorTable({
                   <td>{r.datenfehler ? "ja" : "nein"}</td>
                   <td>{r.error_class}</td>
                   <td>{r.error_count}</td>
-                  <td>{r.aktiv}</td>
                 </tr>
               ))
             ) : (

@@ -17,24 +17,12 @@ export default function RunsList({
   const [error, setError] = useState<string | null>(null);
   // API Values
   const [rows, setRows] = useState<ImportRun[]>([]);
-  // TODO
-  // const [limit, setLimit] = useRef(0);
-  // const [offset, setOffset] = useRef(0);
-  // const [orderBy, setOrderBy] = useRef<string>("");
-  // const [orderDir, setOrderDir] = useRef<string>("");
-  // const [total, setTotal] = useRef(0);
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
       const data = await listImportRuns();
-      // TODO
-      // setLimit(data.limit);
-      // setOffset(data.offset);
-      // setOrderBy(data.orderBy);
-      // setOrderDir(data.orderDir);
-      // setTotal(data.total);
 
       setRows(data.rows);
     } catch (e: any) {
@@ -56,14 +44,14 @@ export default function RunsList({
   function handleClick(run: ImportRun) {
     const id = String(run.id);
     const next = activeId === id ? null : id;
-    setActiveId(next);
-    onSelect?.(next);
+    //setActiveId(next); TODO
+    //onSelect?.(next);
   }
 
   return (
     <div className="runs">
       <div className="runs__header">
-        <h2 className="runs__title">Runs</h2>
+        <h2 className="runs__title">Import Metadaten</h2>
         <div className="runs__actions">
           <Button variant="ghost" onClick={load} disabled={loading}>
             {loading ? "Lade..." : "Neu laden"}
@@ -97,14 +85,8 @@ export default function RunsList({
                 <div className="runs__row">
                   <span className="runs__id">#{id}</span>
                   <span className="runs__meta">
-                    {run.imported_at} · {run.imported_by} ·{" "}
-                    {run.merged ? "merged" : "not merged"}
-                  </span>
-                </div>
-                <div className="runs__row">
-                  <span className="runs__rows">{run.inserted_rows} Zeilen</span>
-                  <span className="runs__hint">
-                    {activeId === id ? "ausgewählt" : "klicken zum Auswählen"}
+                    {run.imported_at} · {run.imported_by} · {run.inserted_rows}{" "}
+                    Zeilen · {run.merged ? "merged" : "not merged"}
                   </span>
                 </div>
               </li>
@@ -112,7 +94,7 @@ export default function RunsList({
           })}
 
           {!loading && !error && rows.length === 0 && (
-            <li className="runs__empty">Noch keine Runs vorhanden.</li>
+            <li className="runs__empty">Noch keine Importe vorhanden.</li>
           )}
         </ul>
       )}
