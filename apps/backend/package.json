@@ -24,7 +24,6 @@
     "typeorm:show": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:show -d src/infra/database/data-source.ts",
     "typeorm:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create src/migrations/new",
     "typeorm:generate": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate src/migrations/auto -d src/infra/database/data-source.ts"
-  
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -32,6 +31,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.0",
     "@nestjs/typeorm": "^11.0.0",
     "axios": "^1.12.2",
     "class-transformer": "^0.5.1",
@@ -39,7 +39,8 @@
     "exceljs": "^4.4.0",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

@@ -1,8 +1,29 @@
 import "./styles/ErrorTable.css";
 import type { ErrorRow, ErrorOrderKey } from "../api/errors.api";
 
+/** Sortierrichtung für Tabellenköpfe. */
 type SortDir = "ASC" | "DESC";
 
+/**
+ * Tabelle für Fehlerdatensätze.
+ *
+ * @param rows    Zeilen des Reports
+ * @param loading Ladezustand; zeigt Skeleton/Leerzeile an
+ * @param orderBy Aktive Sortierspalte
+ * @param orderDir Aktive Sortierrichtung
+ * @param onSort  Callback bei Sortierwechsel
+ *
+ * @example
+ * ```tsx
+ * <ErrorTable
+ *   rows={data.rows}
+ *   loading={isLoading}
+ *   orderBy="error_class"
+ *   orderDir="DESC"
+ *   onSort={(col, dir) => setSort({ col, dir })}
+ * />
+ * ```
+ */
 export default function ErrorTable({
   rows,
   loading,
@@ -16,13 +37,14 @@ export default function ErrorTable({
   orderDir: SortDir;
   onSort: (col: ErrorOrderKey, dir: SortDir) => void;
 }) {
+  /** Wechselt Sortierung auf die angeklickte Spalte. */
   function change(col: ErrorOrderKey) {
     const dir: SortDir =
       orderBy === col ? (orderDir === "ASC" ? "DESC" : "ASC") : "ASC";
     onSort(col, dir);
   }
 
-  // Sortierung
+  /** Erzeugt einen klickbaren Tabellenkopf mit Sortierindikator. */
   function toggableHeader(label: string, col: ErrorOrderKey) {
     const active = orderBy === col;
     const aria = active

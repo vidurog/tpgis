@@ -12,6 +12,14 @@ export class StagingWriterService {
     private readonly repo: Repository<CustomerImport>,
   ) {}
 
+  /**
+   * Führt einen **Bulk-Insert** in die Staging-Tabelle aus.
+   *
+   * @param rows Liste vorbereiteter {@link StagingDto}-Objekte
+   * @remarks
+   * - Schreibt **ohne Upsert/Conflict-Handling** (bewusst: Staging ist append-only).
+   * - Überspringt leere Batches.
+   */
   async bulkInsert(rows: StagingDto[]): Promise<void> {
     if (!rows.length) return;
 

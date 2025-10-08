@@ -8,3 +8,5 @@ code Doku
 Code Fehlerreports verstehen und anpassen.
 FE bauen
 Flags in Excel sind komisch (keine Inkonsistent true/false)
+
+/** SkipErrorChecking: false*/ root/typedock/backend

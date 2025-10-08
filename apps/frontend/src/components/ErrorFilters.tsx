@@ -3,13 +3,32 @@ import Button from "./Button";
 import { useState } from "react";
 import type { ErrorsFilters, ErrorClass } from "../api/errors.api";
 
+/**
+ * Filterleiste für den Fehlerreport.
+ *
+ * @param initial  Startwerte der Filter (optional)
+ * @param onApply  Callback bei „Anwenden“ mit dem aktuellen {@link ErrorsFilters}
+ * @param onReset  Optionaler Callback bei „Zurücksetzen“
+ *
+ * @example
+ * ```tsx
+ * <ErrorFilters
+ *   initial={{ geocodable: false }}
+ *   onApply={(f) => setFilters(f)}
+ *   onReset={() => setFilters({})}
+ * />
+ * ```
+ */
 export default function ErrorFilters({
   initial,
   onApply,
   onReset,
 }: {
+  /** Vorbelegung der Filterwerte. */
   initial?: ErrorsFilters;
+  /** Übergibt die aktuellen Filter nach Klick auf „Anwenden“. */
   onApply: (f: ErrorsFilters) => void;
+  /** Optional: Wird zusätzlich beim Zurücksetzen aufgerufen. */
   onReset?: () => void;
 }) {
   const [plz, setPlz] = useState(String(initial?.plz ?? ""));
@@ -24,6 +43,7 @@ export default function ErrorFilters({
     (initial?.error_class ?? "") as any
   );
 
+  /** Wendet die aktuellen Eingaben als {@link ErrorsFilters} an. */
   function apply() {
     onApply({
       plz: plz.trim() ? plz.trim() : undefined,
@@ -34,6 +54,7 @@ export default function ErrorFilters({
     });
   }
 
+  /** Setzt alle Eingaben zurück und meldet leere Filter an {@link onApply}. */
   function reset() {
     setPlz("");
     setOrt("");

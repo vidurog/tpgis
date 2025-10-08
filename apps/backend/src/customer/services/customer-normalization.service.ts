@@ -1,11 +1,27 @@
+// src/customer/services/customer-normalization.service.ts
 import { Injectable } from '@nestjs/common';
 import { parsePhoneNumberFromString } from 'libphonenumber-js/max';
 
 @Injectable()
 export class CustomerNormalization {
+  /**
+   * Normalisiert einen Namen in die Form:
+   * - "Nachname, Vorname" → `[Vorname, Nachname]` (beide Teile "Title Case"; Bindestriche bleiben, z. B. "Anna-Lena")
+   * - "mustermann, max"   → `["Max", "Mustermann"]`
+   *
+   * @param name Vollständiger Name im Format "Nachname, Vorname"
+   * @returns Tupel `[vorname, nachname]`
+   * @throws Error Wenn kein Name übergeben wurde
+   *
+   * @example
+   * ```ts
+   * normalizeName('müller, anna-lena') // ["Anna-Lena","Müller"]
+   * ```
+   */
   normalizeName(name: string): [vorname: string, nachname: string] {
     if (!name) throw Error('normalizeName: Kein Kundenname!');
 
+    // Hilfsfunktion: "Title Case" pro Segment (auch hinter Bindestrichen)
     const normName = (name: string) => {
       return name
         .split(' ')
@@ -21,6 +37,7 @@ export class CustomerNormalization {
         .trim();
     };
 
+    // Erwartetes Eingabeformat: "Nachname, Vorname"
     let [nachname, vorname] = name
       .split(',')
       .map((s) => s.trim())
@@ -32,63 +49,105 @@ export class CustomerNormalization {
     return [vorname, nachname];
   }
 
+  /**
+   * Normalisiert eine Straßenangabe und trennt die Bestandteile.
+   *
+   * - Korrigiert Leerzeichen um Bindestriche (z. B. "A - Straße" → "A-Straße")
+   * - Ersetzt "strasse"/"str." → "Straße" (inkl. Titel-Case auf Tokens und Segmenten nach Bindestrich)
+   * - Trennt **Hausnummer** inkl. Bereichen und **Adresszusatz** (ein Buchstabe) ab
+   *
+   * @param strasse Rohe Straßenangabe, z. B. "elisabeth-selber -str. 68 - 70 a"
+   * @returns `[streetPart, hnr, adz]` (z. B. `["Elisabeth-Selber-Straße","68-70","a"]`)
+   *
+   * @example
+   * ```ts
+   * normalizeStrasse('Musterstr. 12a') // ["Musterstraße","12","a"]
+   * normalizeStrasse('Musterstraße 68 - 70') // ["Musterstraße","68-70",null]
+   * ```
+   */
   normalizeStrasse(strasse: string): [string, string | null, string | null] {
-  if (!strasse) return ['', null, null];
-  strasse = strasse.trim().replace(/\s+/g, ' ').replace(',', '');
+    if (!strasse) return ['', null, null];
+    strasse = strasse.trim().replace(/\s+/g, ' ').replace(',', '');
 
-  // 🔹 0) Typische Tippfehler / unnötige Leerzeichen bereinigen
-  // Entfernt Leerzeichen vor und nach Bindestrich zwischen Buchstaben
-  // "Elisabeth-Selber -Straße" -> "Elisabeth-Selber-Straße"
-  strasse = strasse.replace(/(\p{L})\s*-\s*(\p{L})/gu, '$1-$2');
+    // 🔹 0) Typische Tippfehler / unnötige Leerzeichen bereinigen:
+    //    Leerzeichen rund um Bindestrich zwischen Buchstaben entfernen
+    //    "Elisabeth-Selber -Straße" -> "Elisabeth-Selber-Straße"
+    strasse = strasse.replace(/(\p{L})\s*-\s*(\p{L})/gu, '$1-$2');
 
-  // 1) Straße / Hausnummer (+ evtl. Zusatz) trennen
-  // erlaubt 68-70, 68 - 70, 68/70, 68 / 70
-  const m = strasse.match(/^(.*?)(\d+(?:\s*[-\/]\s*\d+)?)(?:\s*([a-zA-Z]))?$/u);
-  if (!m) return ['', null, null];
+    // 1) Straße / Hausnummer (+ optionaler 1-Buchstaben-Zusatz) trennen.
+    //    Erlaubt: "68-70", "68 - 70", "68/70", "68 / 70", "12a"
+    //    Regex-Gruppen:
+    //      (.*?)                         → Straße (lazy)
+    //      (\d+(?:\s*[-\/]\s*\d+)?)      → HNR oder HNR-Bereich (z. B. "12", "12-14", "12/14")
+    //      (?:\s*([a-zA-Z]))?            → optionaler 1-Zeichen-Zusatz (z. B. "a")
+    const m = strasse.match(
+      /^(.*?)(\d+(?:\s*[-\/]\s*\d+)?)(?:\s*([a-zA-Z]))?$/u,
+    );
+    if (!m) return ['', null, null];
 
-  let streetPart = m[1].trim();
-  let hnr = m[2].trim();
-  let adz: string | null = m[3] ? m[3].toLowerCase() : null;
+    let streetPart = m[1].trim();
+    let hnr = m[2].trim();
+    let adz: string | null = m[3] ? m[3].toLowerCase() : null;
 
-  // 2) Straße normalisieren
-  streetPart = streetPart
-    .replace(/(?<=\p{L})\s+strasse(?!\p{L})/giu, ' Straße')
-    .replace(/(?<=\p{L})(-)\s*strasse(?!\p{L})/giu, '$1Straße')
-    .replace(/(\p{L}{3,})strasse(?!\p{L})/giu, '$1straße')
-    .replace(/(?<=\p{L})\s+str\.?(?!\p{L})/giu, ' Straße')
-    .replace(/(?<=\p{L})(-)\s*str\.?(?!\p{L})/giu, '$1Straße')
-    .replace(/(\p{L}{3,})str\.?(?!\p{L})/giu, '$1straße')
-    .replace(/\.\s*$/u, '');
+    // 2) Straße normalisieren (Ersetzungen für "strasse"/"str.")
+    streetPart = streetPart
+      .replace(/(?<=\p{L})\s+strasse(?!\p{L})/giu, ' Straße')
+      .replace(/(?<=\p{L})(-)\s*strasse(?!\p{L})/giu, '$1Straße')
+      .replace(/(\p{L}{3,})strasse(?!\p{L})/giu, '$1straße')
+      .replace(/(?<=\p{L})\s+str\.?(?!\p{L})/giu, ' Straße')
+      .replace(/(?<=\p{L})(-)\s*str\.?(?!\p{L})/giu, '$1Straße')
+      .replace(/(\p{L}{3,})str\.?(?!\p{L})/giu, '$1straße')
+      .replace(/\.\s*$/u, '');
 
-  // 3) Titel-Case + Bindestriche korrekt setzen
-  streetPart = streetPart
-    .split(' ')
-    .map((tok) =>
-      tok
-        .split('-')
-        .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase())
-        .join('-'),
-    )
-    .join(' ');
+    // 3) Titel-Case + korrekte Groß-/Kleinschreibung pro Token und Bindestrich-Segment
+    streetPart = streetPart
+      .split(' ')
+      .map((tok) =>
+        tok
+          .split('-')
+          .map(
+            (seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase(),
+          )
+          .join('-'),
+      )
+      .join(' ');
 
-  // 4) Hausnummer bereinigen
-  hnr = hnr
-    .toLowerCase()
-    .replace(/\s*-\s*/g, '-')   // "68 - 70" -> "68-70"
-    .replace(/\s*\/\s*/g, '/')  // "68 / 70" -> "68/70"
-    .replace(/\s+/g, ' ')
-    .trim();
+    // 4) Hausnummer bereinigen (einheitliche Trennzeichen, Trim)
+    hnr = hnr
+      .toLowerCase()
+      .replace(/\s*-\s*/g, '-') // "68 - 70" -> "68-70"
+      .replace(/\s*\/\s*/g, '/') // "68 / 70" -> "68/70"
+      .replace(/\s+/g, ' ')
+      .trim();
 
-  return [streetPart, hnr, adz];
-}
+    return [streetPart, hnr, adz];
+  }
 
-
-
+  /**
+   * Minimal-Normalisierung des Ortsnamens.
+   * @param strasse (Historische Benennung; tatsächlich wird der **Ort** übergeben)
+   * @returns ggf. vereinheitlichte Ortsbezeichnung
+   *
+   * @remarks
+   * Diese Methode vereinheitlicht aktuell nur "Mülheim" → "Mülheim an der Ruhr".
+   * (Benennung des Parameters ist historisch bedingt.)
+   */
   normalizeOrt(strasse: string): string {
-    if(strasse.includes('Mülheim')) return 'Mülheim an der Ruhr';
+    if (strasse.includes('Mülheim')) return 'Mülheim an der Ruhr';
     return strasse;
   }
 
+  /**
+   * Normalisiert Telefonnummern auf **E.164** (z. B. `"+492011023238"`) oder gibt `null` zurück.
+   *
+   * @param nummer Rohstring (mit/ohne Ländervorwahl, Sonderzeichen etc.)
+   * @returns E.164-Format oder `null` falls nicht plausibel
+   *
+   * @remarks
+   * - Primär wird `libphonenumber-js` (Region `"DE"`) verwendet.
+   * - Fallback-Heuristik: bereinigt auf Ziffern/`+`, wandelt `00…` → `+…`,
+   *   ergänzt fehlende Ländervorwahl als `+49` (bei ausreichend Ziffern).
+   */
   /** Gibt E.164 zurück (z. B. "+492011023238") oder null, wenn nichts Plausibles. */
   normalizeToE164(nummer: string | null): string | null {
     if (!nummer) return null;
@@ -122,6 +181,16 @@ export class CustomerNormalization {
     return '+49' + national;
   }
 
+  /**
+   * Normalisiert die Pflegegrad-Kennung auf vordefinierte Werte.
+   *
+   * @param kennung Eingabestring (z. B. "Pflegegrad 3")
+   * @returns "Pflegegrad 1..4" oder "Kein Pflegegrad" bzw. `null` wenn keine Pflege-Angabe
+   *
+   * @remarks
+   * Einfache Heuristik: enthält der String "Pflege" und eine Ziffer 1..4,
+   * wird auf den jeweiligen Standardwert gemappt.
+   */
   normalizeKennung(kennung: string | null): string | null {
     if (!kennung || !kennung?.includes('Pflege')) return null;
     else if (kennung.includes('1')) return 'Pflegegrad 1';
@@ -131,6 +200,21 @@ export class CustomerNormalization {
     else return 'Kein Pflegegrad';
   }
 
+  /**
+   * Erzeugt eine einfache **Kundennummer** aus Vorname/Name/Straße (+ optional Hausnummer).
+   *
+   * @param vorname Vorname
+   * @param name Nachname
+   * @param strasse Straße
+   * @param hnr Hausnummer oder `null`
+   * @returns generierte Kundennummer (z. B. `"MAXMUSMUS12"`)
+   *
+   * @remarks
+   * - Verwendet je 3 Zeichen von Vorname/Name/Straße (Uppercase).
+   * - Hängt die Hausnummer an, ansonsten `"000"`.
+   * - **Hinweis**: `replace(' ', '')` entfernt nur das **erste** Leerzeichen.
+   *   Für eine aggressive Entfernung aller Leerzeichen wäre ein RegExp nötig.
+   */
   createKundennummer(
     vorname: string,
     name: string,
@@ -138,12 +222,29 @@ export class CustomerNormalization {
     hnr: string | null,
   ): string {
     const kundennummer =
-      vorname.slice(0,3).toUpperCase() + name.slice(0,3).toUpperCase() + strasse.slice(0, 3).toUpperCase();
+      vorname.slice(0, 3).toUpperCase() +
+      name.slice(0, 3).toUpperCase() +
+      strasse.slice(0, 3).toUpperCase();
     return hnr
       ? (kundennummer + hnr).replace(' ', '')
       : (kundennummer + '000').replace(' ', '');
   }
 
+  /**
+   * Berechnet den nächsten **Planmonat** basierend auf Historik + Besuchsrhythmus.
+   *
+   * - Erwartete Rhythmus-Formate: `"1 Monat"`, `"3 Monate"`, `"6 Monate"` (Leerzeichen optional)
+   * - Setzt das Ergebnis auf den **1. des Zielmonats**
+   *
+   * @param historik Ausgangsdatum (z. B. letzter QS-Besuch)
+   * @param rhythmus String mit Monatsanzahl, z. B. `"3 Monate"`
+   * @returns Datum (1. Tag des Zielmonats) oder `null` bei unklarem Rhythmus
+   *
+   * @example
+   * ```ts
+   * createPlanmonat(new Date('2025-01-20'), '3 Monate') // 2025-04-01
+   * ```
+   */
   createPlanmonat(historik: Date | null, rhythmus: string | null): Date | null {
     if (!historik || !rhythmus) return null;
 

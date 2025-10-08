@@ -8,7 +8,7 @@ import {
   toStrOrNull,
 } from 'src/util/customer_import.util';
 
-type MetaMapping = {
+export type MetaMapping = {
   import_id: string;
   imported_at: Date;
   imported_by: string;
@@ -73,7 +73,7 @@ const COLUMN_MAP: ColumnMap = {
     aliases: ['serviceberater', 'berater'],
     transform: toStrOrNull,
   },
-  besuchrhythmus: {
+  besuchsrhythmus: {
     db: 'besuchrhythmus',
     aliases: [
       'besuchrhythmus',
@@ -143,10 +143,25 @@ const COLUMN_MAP: ColumnMap = {
 
 @Injectable()
 export class ImportMappingService {
+  /**
+   * Liefert die zentrale **Spaltenmap** (Quellspalten → Staging-Felder).
+   * @returns {@link ColumnMap}
+   */
   getColumnMap(): ColumnMap {
     return COLUMN_MAP;
   }
 
+  /**
+   * Mappt eine **Rohzeile** (z. B. aus XLSX) in ein **StagingDto**:
+   * - normalisiert Schlüsselnamen via `normalizeKey`
+   * - sucht pro Zielspalte die erste passende Quellspalte aus `aliases`
+   * - wendet optionale `transform`-Funktionen an
+   * - setzt Metafelder (`import_id`, `imported_at`, `imported_by`)
+   *
+   * @param row Rohzeile aus dem Reader (`Record<string, any>`)
+   * @param meta Lauf-Metadaten (Import-ID, Zeitstempel, Benutzer)
+   * @returns Fertiges {@link StagingDto}
+   */
   mapToStaging(row: Record<string, any>, meta: MetaMapping): StagingDto {
     const normRow: Record<string, any> = {};
     for (const [k, v] of Object.entries(row)) {
@@ -155,7 +170,7 @@ export class ImportMappingService {
       normRow[normalizeKey(k)] = v;
     }
 
-    // DTO vorbereiten
+    // DTO vorbereiten (Default-Nulls)
     const dto: any = {
       import_id: String(meta.import_id),
       imported_at: meta.imported_at,

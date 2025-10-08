@@ -4,5 +4,13 @@
     "exceljs": "^4.4.0",
     "libphonenumber-js": "^1.12.18",
     "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "typedoc": "^0.28.13"
+  },
+  "scripts": {
+    "docs:backend": "typedoc --options typedoc.backend.json",
+    "docs:frontend": "typedoc --options typedoc.frontend.json",
+    "docs:all": "npm run docs:backend && npm run docs:frontend"
   }
 }

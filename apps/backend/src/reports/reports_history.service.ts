@@ -1,3 +1,4 @@
+// src/reports/reports_history.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CustomerImport } from 'src/customer_imports/customer_imports.entity';
@@ -9,6 +10,13 @@ import {
 import { RunsQueryDto, runsSortable } from './dto/runs-query.dto';
 import { CustomerImportRuns } from 'src/customer_imports_runs/customer_imports_runs.entity';
 
+/**
+ * Liefert Historien-Views:
+ * - Einzelne Import-Zeilen (Staging-Quelle)
+ * - Aggregierte Import-Läufe (Runs)
+ *
+ * Hinweis: Sorting-Keys sind whitelisted (SQL-Injection-Prävention).
+ */
 @Injectable()
 export class ReportsHistoryService {
   constructor(
@@ -18,7 +26,7 @@ export class ReportsHistoryService {
     private readonly runsRepo: Repository<CustomerImportRuns>,
   ) {}
 
-  // Whitelist gegen SQL Injection
+  // Whitelist gegen SQL Injection (Import-Historie)
   private readonly IMPORT_SORT_MAP: Record<importSortable, string> = {
     id: 'ki.id',
     import_id: 'ki.import_id',
@@ -30,6 +38,7 @@ export class ReportsHistoryService {
     ort: 'ki.ort',
   };
 
+  // Whitelist gegen SQL Injection (Runs)
   private readonly RUNS_SORT_MAP: Record<runsSortable, string> = {
     import_id: 'r.import_id',
     imported_at: 'r.imported_at',
@@ -38,6 +47,10 @@ export class ReportsHistoryService {
     inserted_rows: 'r.inserted_rows',
   };
 
+  /**
+   * Listet Import-Historie (Staging-Einträge) mit Filtern, Sortierung & Pagination.
+   * @returns Objekt mit `{ total, limit, offset, orderBy, orderDir, rows }`
+   */
   async listAll(dto: ImportHistoryQueryDto) {
     const qb = this.importRepo.createQueryBuilder('ki');
 
@@ -67,18 +80,19 @@ export class ReportsHistoryService {
       qb.andWhere('ki.imported_at < :to', { to: dto.to });
     }
 
-    // Sortierung
+    // Sortierung (nur Whitelist)
     const sortKey: importSortable = dto.orderBy ?? 'imported_at';
     const sortCol = this.IMPORT_SORT_MAP[sortKey];
     const sortDir: 'ASC' | 'DESC' = dto.orderDir;
     qb.orderBy(sortCol, sortDir);
 
-    // Pagination
+    // Pagination (hart gekappt auf 200)
     const limit = Math.min(dto.limit ?? 50, 200);
     const offset = dto.offset ?? 0;
     qb.take(limit).skip(offset);
 
     // Query ausführen
+    // getManyAndCount(): `rows` mit Limit/Offset; `total` = Gesamtanzahl ohne Pagination
     const [rows, total] = await qb.getManyAndCount();
 
     return {
@@ -91,6 +105,10 @@ export class ReportsHistoryService {
     };
   }
 
+  /**
+   * Listet Import-Runs (Meta je Importlauf) mit Filtern, Sortierung & Pagination.
+   * @returns Objekt mit `{ total, limit, offset, orderBy, orderDir, rows }`
+   */
   async listRuns(dto: RunsQueryDto) {
     const qb = this.runsRepo.createQueryBuilder('r');
 
@@ -105,7 +123,6 @@ export class ReportsHistoryService {
       qb.andWhere('r.imported_at < :to', { to: dto.to });
     }
     if (dto.merged !== undefined) {
-      console.log(typeof dto.merged, dto.merged);
       qb.andWhere('r.merged = :m', { m: dto.merged });
     }
 

@@ -4,6 +4,13 @@ import Button from "./Button";
 import type { CustomerImportFilter } from "../api/imports.api";
 import { localDateTimeToUtcIso } from "../shared/lib/dateTime";
 
+/**
+ * Filterleiste für die Import-Historie.
+ *
+ * @param onApply  Meldet die aktuellen Filter an den Parent
+ * @param onReset  Optionaler Reset-Callback
+ * @param initial  Startwerte der Filter
+ */
 export default function ImportFilter({
   onApply,
   onReset,
@@ -28,6 +35,7 @@ export default function ImportFilter({
   const [fromLocal, setFromLocal] = useState<string>("");
   const [toLocal, setToLocal] = useState<string>("");
 
+  /** Erzeugt ein {@link CustomerImportFilter} und meldet es an {@link onApply}. */
   function apply() {
     onApply({
       import_id: import_id || undefined,
@@ -41,6 +49,7 @@ export default function ImportFilter({
     });
   }
 
+  /** Setzt die Eingaben zurück und meldet leere Filter an {@link onApply}. */
   function reset() {
     setImportId("");
     setImportedBy("");

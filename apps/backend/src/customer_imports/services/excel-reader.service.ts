@@ -4,14 +4,26 @@ import * as Excel from 'exceljs';
 
 @Injectable()
 export class ExcelReaderService {
-  // 0) Generator Funktion um yield zu benutzen
+  /**
+   * Streamt eine XLSX-Arbeitsmappe zeilenweise als **normalisierte Records**.
+   *
+   * @remarks
+   * - Nutzt den **Streaming-Reader** von `exceljs` (speicherschonend).
+   * - Überspringt die **ersten zwei Header-Zeilen**.
+   * - Formeln werden auf ihr **Ergebnis** reduziert.
+   * - RichText wird zu einfachem Text konkateniert.
+   * - Zellen werden möglichst in **primitive** Typen überführt (`string | number | Date | null`).
+   *
+   * @param filePath Absoluter Pfad zur XLSX-Datei
+   * @yields `Record<string, any>` mit festen Schlüsseln laut `header`
+   */
   async *rows(filePath: string): AsyncGenerator<Record<string, any>> {
     const wb = new Excel.stream.xlsx.WorkbookReader(filePath, {
       entries: 'emit',
       sharedStrings: 'cache',
     });
 
-    // 1) Header der Excel Datei
+    // 1) Erwartete Header der Excel-Datei (Spaltenbelegung)
     const header: string[] = [
       '',
       'kunde',
@@ -34,6 +46,7 @@ export class ExcelReaderService {
       'qs_besuch_hinweis_2',
     ];
 
+    // Zelleninhalt auf einen brauchbaren primitiven Typ reduzieren
     const normCell = (v: any) => {
       if (v == null) return null;
       if (typeof v === 'object') {
@@ -53,7 +66,7 @@ export class ExcelReaderService {
 
       for await (const row of ws) {
         rowIndex++;
-        const raw = row.values as any[]; // exceljs is 1-basiert
+        const raw = row.values as any[]; // exceljs ist 1-basiert
         if (rowIndex <= 2) continue; // first two lines are Headers
 
         const values = raw.map(normCell);
@@ -67,6 +80,10 @@ export class ExcelReaderService {
     }
   }
 
+  /**
+   * Hook für Ressourcenfreigabe (derzeit ohne Inhalt).
+   * @param filePath Pfad zur XLSX-Datei
+   */
   async close(filePath: string): Promise<void> {
     // optional
   }

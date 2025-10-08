@@ -3,12 +3,33 @@ import { useState, useRef } from "react";
 import Button from "./Button";
 import { mergeExcelFile, uploadImportExcel } from "../api/excel.api";
 
+/**
+ * Eigenschaften für den Excel-Uploader.
+ */
 type Props = {
+  /** Maximale Dateigröße in MB. @defaultValue 20 */
   maxSizeMB?: number;
+  /** Callback bei Dateiauswahl (oder `null` bei Entfernen). */
   onSelect?: (file: File | null) => void;
-  onUploaded?: (result: { importId?: string | number }) => void; // neu: Callback nach erfolgreichem Upload
+  /**
+   * Callback nach erfolgreichem Upload+Merge.
+   * Liefert u. a. die `importId` des erzeugten Imports.
+   */
+  onUploaded?: (result: { importId?: string | number }) => void;
 };
 
+/**
+ * UI-Komponente zum Hochladen und anschließenden Mergen einer Excel-Datei.
+ *
+ * - Validiert Dateiendung und Größe.
+ * - Ruft `uploadImportExcel` (Upload) und `mergeExcelFile` (Merge) auf.
+ * - Zeigt Erfolg-/Fehlerzustände an.
+ *
+ * @example
+ * ```tsx
+ * <ExcelUpload onUploaded={({ importId }) => reload(importId)} />
+ * ```
+ */
 export default function ExcelUpload({
   maxSizeMB = 20,
   onSelect,
@@ -22,6 +43,7 @@ export default function ExcelUpload({
   const [mergeSuccess, setMergeSuccess] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  /** Entfernt die aktuelle Datei und setzt Meldungen zurück. */
   function reset() {
     setFile(null);
     setError(null);
@@ -31,6 +53,7 @@ export default function ExcelUpload({
     onSelect?.(null);
   }
 
+  /** Validiert die gewählte Datei (Typ/Größe) und setzt State. */
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
     setUpdateSuccess(null);
@@ -60,6 +83,13 @@ export default function ExcelUpload({
     onSelect?.(f);
   }
 
+  /**
+   * Führt Upload und Merge aus.
+   *
+   * @remarks
+   * - Zeigt entsprechende Statusmeldungen an.
+   * - Ruft {@link onUploaded} nach Erfolg auf.
+   */
   async function handleSubmit() {
     if (!file || loading) return;
     setLoading(true);
@@ -69,6 +99,7 @@ export default function ExcelUpload({
     try {
       // Datei Hochladen zu kunden_import
       const updateRes = await uploadImportExcel(file);
+
       const import_id = updateRes.import_id;
       setUpdateSuccess(
         `Upload erfolgreich${import_id ? ` (Import ID #${import_id})` : ""}.`
@@ -78,13 +109,14 @@ export default function ExcelUpload({
       // Datei mergen zu kunden
       setMerging(true);
       const mergeRes = await mergeExcelFile(import_id);
-      setMergeSuccess(
-        `Merge erfolgreich${
-          import_id
-            ? ` (Import ID #${import_id}, inserted: ${mergeRes.inserted}, updated: ${mergeRes.updated})` // TODO inserted, updated, deduped
-            : ""
-        }.`
-      );
+      const noUpsert = mergeRes.inserted === 0 && mergeRes.updated === 0;
+
+      noUpsert
+        ? setMergeSuccess("Merge erfolgreich. Keine neuen Daten.")
+        : setMergeSuccess(
+            `Merge erfolgreich. (inserted: ${mergeRes.inserted}, updated: ${mergeRes.updated})`
+          );
+
       setMerging(false);
 
       // FE neu rendern
@@ -132,8 +164,8 @@ export default function ExcelUpload({
       {mergeSuccess && <div className="xl__success">{mergeSuccess}</div>}
 
       <div className="xl__actions">
-        <Button onClick={handleSubmit} disabled={!file || loading}>
-          {loading ? "Lade hoch..." : merging ? "Merge Daten" : "Hochladen"}
+        <Button onClick={handleSubmit} disabled={!file || loading || merging}>
+          {loading ? "Lade hoch..." : merging ? "Merge Daten..." : "Hochladen"}
         </Button>
       </div>
     </div>

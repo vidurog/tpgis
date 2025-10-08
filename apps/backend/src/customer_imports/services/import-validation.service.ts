@@ -1,15 +1,20 @@
 // apps/backend/src/imports/import-validation.service.ts
 import { Injectable } from '@nestjs/common';
 import { StagingDto, ValidationError } from '../dto/stage-import.dto';
-import {
-  isISODate,
-  isGermanPLZ,
-  hasMinDigits,
-  trimNull,
-} from 'src/util/customer_import.util';
+import { trimNull } from 'src/util/customer_import.util';
 
 @Injectable()
 export class ImportValidationService {
+  /**
+   * Prüft ein {@link StagingDto} auf **Pflichtfelder** und Basistypen.
+   *
+   * @param dto Staging-Datensatz
+   * @returns `{ ok: true }` wenn valide, sonst `{ ok: false, errors }`
+   *
+   * @remarks
+   * Aktuell werden die Metafelder (`import_id`, `imported_at`, `imported_by`)
+   * sowie `kunde` geprüft. Weitere Regeln können schrittweise ergänzt werden.
+   */
   validate(
     dto: StagingDto,
   ): { ok: true } | { ok: false; errors: ValidationError[] } {
@@ -47,6 +52,13 @@ export class ImportValidationService {
     return errors.length ? { ok: false, errors } : { ok: true };
   }
 
+  /**
+   * Erzwingt eine defensive **Normalisierung** offensichtlicher Fälle
+   * (Trim, Entfernen von Leerzeichen, Null-Handling).
+   *
+   * @param dto Staging-Datensatz (Rohwerte)
+   * @returns Staging-Datensatz mit bereinigten Feldern
+   */
   coerce(dto: StagingDto): StagingDto {
     return {
       ...dto,

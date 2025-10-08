@@ -1,14 +1,23 @@
 import { UtcDateTimeToBerlin } from "../shared/lib/dateTime";
 import { http } from "../shared/lib/http";
 
+/**
+ * Metadatensatz einer Import-Ausführung (ein Eintrag pro Upload/Merge).
+ */
 export type ImportRun = {
+  /** ID (abgeleitet aus `import_id` oder `id`) */
   id: string | number;
+  /** Importzeitpunkt (bereits in Europe/Berlin konvertiert) */
   imported_at: string; // ISO/String
+  /** Kürzel oder Name des Importeurs */
   imported_by: string;
+  /** Ob der Import bereits gemerged wurde */
   merged: boolean;
+  /** Anzahl eingefügter Zeilen im Merge-Vorgang */
   inserted_rows: number;
 };
 
+/** Paginierte DTO-Hülle für {@link ImportRun}. */
 type ImportRunDto = {
   limit: number;
   offset: number;
@@ -18,6 +27,10 @@ type ImportRunDto = {
   total: number;
 };
 
+/**
+ * Rohdatensatz aus `kunden_import` (oder vergleichbarer Importtabelle).
+ * Die Strings spiegeln den Rohinhalt wider; Datumswerte sind Strings.
+ */
 export type CustomerImport = {
   id: number | string;
   import_id: number | string;
@@ -42,6 +55,7 @@ export type CustomerImport = {
   qs_besuch_hinweis_2: string;
 };
 
+/** Paginierte DTO-Hülle für {@link CustomerImport}. */
 export type CustomerImportDTO = {
   limit: number;
   offset: number;
@@ -51,19 +65,35 @@ export type CustomerImportDTO = {
   rows: CustomerImport[];
 };
 
+/**
+ * Filter für die Import-Historie (Server-seitige Suche/Filterung).
+ * Nur definierte/nicht-leere Felder werden als Query-String angehängt.
+ */
 export type CustomerImportFilter = {
   import_id?: string | number;
   imported_by?: string;
   kunde?: string;
   strasse?: string;
   ort?: string;
-  plz?: number | string; // Input kommt als string
-  from?: string; // ISO-UTC
-  to?: string; // ISO-UTC
+  /** Hinweis: Input kommt typischerweise als String an */
+  plz?: number | string;
+  /** ISO-UTC Startzeitpunkt (inkl.) */
+  from?: string;
+  /** ISO-UTC Endzeitpunkt (exkl. oder inkl. je nach Backend) */
+  to?: string;
 };
 
 /**
- * Listet Metadaten von jeden Import auf
+ * Listet Metadaten aller Importe auf (paginierbar/sortierbar).
+ * Konvertiert `imported_at` in die Zeitzone Europe/Berlin.
+ *
+ * @returns {@link ImportRunDto} mit konvertierten `rows`.
+ *
+ * @example
+ * ```ts
+ * const runs = await listImportRuns();
+ * console.log(runs.rows[0].imported_at); // Berlin-Zeit
+ * ```
  */
 export async function listImportRuns(): Promise<ImportRunDto> {
   const res = await http.get<ImportRunDto>("/reports/runs");
@@ -90,10 +120,20 @@ export async function listImportRuns(): Promise<ImportRunDto> {
 }
 
 /**
- * Listet Tabelle kunden_import auf
- * ggf. für eine ImoprtID (TODO)
+ * Listet `kunden_import` (paginierbar + filterbar).
+ * Beachte: `UtcDateTimeToBerlin` wird auf `imported_at` angewandt.
+ *
+ * @param params Paginierung, Sortierung und optionale Filter.
+ * @returns {@link CustomerImportDTO} mit normalisierten/konvertierten `rows`.
+ *
+ * @example
+ * ```ts
+ * const page = await listCustomerImports({
+ *   limit: 100,
+ *   filters: { imported_by: "000" }
+ * });
+ * ```
  */
-
 export async function listCustomerImports(params?: {
   limit?: number;
   offset?: number;
@@ -160,7 +200,6 @@ export async function listCustomerImports(params?: {
       ? "Lorem Ipsum"
       : null,
   }));
-  console.log("Customer API rows", rows);
 
   return {
     total: Number(payload.total ?? rows.length),
