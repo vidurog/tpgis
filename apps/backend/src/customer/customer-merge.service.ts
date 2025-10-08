@@ -138,14 +138,6 @@ export class CustomerMergeService {
         qs_besuch_hinweis_1: row.qs_besuch_hinweis_1,
         qs_besuch_hinweis_2: row.qs_besuch_hinweis_2,
         geom: null,
-        planmonat: null,
-        termin: null, // Date // Logik TODO
-        termindauer_min: null, // Logik TODO
-        terminstatus: null, // Logik TODO
-        termingrund: null, // Logik TODO
-        reihenfolge_nr: null, // Logik TODO
-        parken: null, // Logik TODO
-        bemerkung: null, // Logik TODO
         datenfehler: false,
         begruendung_datenfehler: null,
         aktiv: true, // Logik TODO
@@ -172,10 +164,6 @@ export class CustomerMergeService {
       );
 
       // customer.besuchrhythmus = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2; // DEBUG
-      customer.planmonat = this.normService.createPlanmonat(
-        customer.qs_besuch_historik,
-        customer.besuchrhythmus,
-      );
 
       // ------------------- DB Gebäudematch -------------------
       // T0: Exakt auf (Ort/Kreis, Straße normiert, Hausnummer numerisch, Suffix)

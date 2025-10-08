@@ -1,8 +1,4 @@
 // customer.dto.ts
-import { CUSTOMER_TERMINSTATUS } from './customer.terminstatus';
-import { CUSTOMER_TERMINGRUND } from './customer.termingrund';
-import { CUSTOMER_PARKEN } from './customer.parken';
-
 /**
  * Transport-/API-DTO für Kunden-Datensätze.
  *
@@ -84,30 +80,6 @@ export type CustomerDTO = {
    * { lon: 6.960279, lat: 50.937531 }
    */
   geom: { lon: number; lat: number } | null;
-
-  /** Geplanter Abrechnungs-/Planmonat. */
-  planmonat: Date | null;
-
-  /** Konkreter Terminzeitpunkt. */
-  termin: Date | null;
-
-  /** Dauer des Termins in Minuten. */
-  termindauer_min: number | null;
-
-  /** Status des Termins (siehe {@link CUSTOMER_TERMINSTATUS}). */
-  terminstatus: CUSTOMER_TERMINSTATUS | null;
-
-  /** Grund des Termins (siehe {@link CUSTOMER_TERMINGRUND}). */
-  termingrund: CUSTOMER_TERMINGRUND | null;
-
-  /** Reihenfolgenummer für Touren/Listen. */
-  reihenfolge_nr: number | null;
-
-  /** Parksituation vor Ort (siehe {@link CUSTOMER_PARKEN}). */
-  parken: CUSTOMER_PARKEN | null;
-
-  /** Allgemeine Bemerkungen. */
-  bemerkung: string | null;
 
   /** Flag: Datensatz hat (noch) Datenfehler. */
   datenfehler: boolean;

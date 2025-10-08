@@ -116,38 +116,6 @@ export class Customer {
   })
   geom: string | null; // ST_SetSRID(ST_MakePoint(lon,lat),4326)
 
-  /** Geplanter Abrechnungs-/Planmonat (immer auf den 1. gesetzt). */
-  @Column({ type: 'date', nullable: true })
-  planmonat: Date | null; // immer 1. des Monats
-
-  /** Konkreter Termin (Zeitpunkt) in TZ-aware Spalte. */
-  @Column({ type: 'timestamptz', nullable: true })
-  termin: Date | null;
-
-  /** Geplante Termindauer in Minuten. */
-  @Column({ type: 'integer', nullable: true })
-  termindauer_min: number | null;
-
-  /** Terminstatus als Text (Domänenwert). */
-  @Column({ type: 'text', nullable: true })
-  terminstatus: string | null;
-
-  /** Termingrund als Text (Domänenwert). */
-  @Column({ type: 'text', nullable: true })
-  termingrund: string | null;
-
-  /** Reihenfolge-Nummer für Touren/Listen. */
-  @Column({ type: 'integer', nullable: true })
-  reihenfolge_nr: number | null;
-
-  /** Parksituation (Domänenwert als Text). */
-  @Column({ type: 'text', nullable: true })
-  parken: string | null;
-
-  /** Allgemeine Bemerkungen. */
-  @Column({ type: 'text', nullable: true })
-  bemerkung: string | null;
-
   /** Flag: Datensatz hat (noch) Datenfehler. */
   @Column({ type: 'boolean', default: false })
   datenfehler: boolean;
