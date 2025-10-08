@@ -42,6 +42,8 @@ export default function ErrorFilters({
   const [errorClass, setErrorClass] = useState<ErrorClass | "">(
     (initial?.error_class ?? "") as any
   );
+  const [kundennummer, setKundennummer] = useState(initial?.kundennummer ?? "");
+  const [kundenname, setKundenname] = useState(initial?.kundenname ?? "");
 
   /** Wendet die aktuellen Eingaben als {@link ErrorsFilters} an. */
   function apply() {
@@ -51,6 +53,8 @@ export default function ErrorFilters({
       datenfehler,
       geocodable,
       error_class: (errorClass || undefined) as ErrorClass | undefined,
+      kundennummer: kundennummer.trim() || undefined,
+      kundenname: kundenname.trim() || undefined,
     });
   }
 
@@ -61,6 +65,8 @@ export default function ErrorFilters({
     setDatenfehler(undefined);
     setGeocodable(undefined);
     setErrorClass("");
+    setKundennummer("");
+    setKundenname("");
     onReset?.();
     onApply({});
   }
@@ -70,10 +76,25 @@ export default function ErrorFilters({
       <div className="efilters__row">
         <input
           className="efilters__input"
+          placeholder="Kundennummer"
+          value={kundennummer}
+          onChange={(e) => setKundennummer(e.target.value)}
+        />
+
+        <input
+          className="efilters__input"
+          placeholder="Kundenname"
+          value={kundenname}
+          onChange={(e) => setKundenname(e.target.value)}
+        />
+
+        <input
+          className="efilters__input"
           placeholder="PLZ"
           value={plz}
           onChange={(e) => setPlz(e.target.value)}
         />
+
         <input
           className="efilters__input"
           placeholder="Ort"

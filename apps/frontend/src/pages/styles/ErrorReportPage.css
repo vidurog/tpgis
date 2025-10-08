@@ -1,1 +1,8 @@
 .errors { display: grid; gap: 16px; }
+/* Layout für KPI-Leiste oben auf der Fehlerreport-Seite */
+.errors__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 8px 0 12px;
+}

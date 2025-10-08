@@ -50,7 +50,7 @@ export type ErrorRow = {
   /** Adresszusatz (z. B. Buchstaben hinter der HNr) */
   adz: string | null;
   /** Postleitzahl; Backend liefert hier Zahl oder null */
-  plz: number | null;
+  plz: string | null;
   ort: string | null;
   telefon: string | null;
   mobil: string | null;
@@ -102,6 +102,21 @@ export type ErrorsFilters = {
   err_missing_contact?: boolean;
   err_no_geocoding?: boolean;
   err_address_changed?: boolean;
+
+  // Kundennummer und Kundenname filterbar
+  kundennummer?: string;
+  kundenname?: string;
+};
+
+/** Typ für Fehler statisik (Anzahl) */
+export type ErrorsStatsDto = {
+  total_filtered: number;
+  datenfehler_count: number;
+  by_error_class: {
+    NO_ADDRESS_ISSUE: number;
+    ADDRESS_GEOCODABLE: number;
+    ADDRESS_NOT_GEOCODABLE: number;
+  };
 };
 
 /**
@@ -120,6 +135,8 @@ export type ErrorsDto = {
   orderDir: "ASC" | "DESC";
   /** Datensätze der aktuellen Seite */
   rows: ErrorRow[];
+  /** Error Statistik */
+  errorStats: ErrorsStatsDto;
 };
 
 /**
@@ -171,6 +188,24 @@ export async function listErrors(params?: {
   const payload: any = res.data ?? {};
   const rows = (Array.isArray(payload.rows) ? payload.rows : []) as ErrorRow[];
 
+  const errorStats: ErrorsStatsDto = {
+    total_filtered: Number(
+      payload?.stats?.total_filtered ?? payload?.total ?? rows.length ?? 0
+    ),
+    datenfehler_count: Number(payload?.stats?.datenfehler_count ?? 0),
+    by_error_class: {
+      NO_ADDRESS_ISSUE: Number(
+        payload?.stats?.by_error_class?.NO_ADDRESS_ISSUE ?? 0
+      ),
+      ADDRESS_GEOCODABLE: Number(
+        payload?.stats?.by_error_class?.ADDRESS_GEOCODABLE ?? 0
+      ),
+      ADDRESS_NOT_GEOCODABLE: Number(
+        payload?.stats?.by_error_class?.ADDRESS_NOT_GEOCODABLE ?? 0
+      ),
+    },
+  };
+
   return {
     total: Number(payload.total ?? rows.length),
     limit: Number(payload.limit ?? limit),
@@ -180,6 +215,7 @@ export async function listErrors(params?: {
       | "ASC"
       | "DESC",
     rows,
+    errorStats,
   };
 }
 

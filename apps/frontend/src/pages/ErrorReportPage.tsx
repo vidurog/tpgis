@@ -10,7 +10,9 @@ import {
   type ErrorsFilters,
   type ErrorRow,
   type ErrorOrderKey,
+  type ErrorsStatsDto,
 } from "../api/errors.api";
+import ErrorStatsKpi from "../components/ErrorsStatsKPI";
 
 /**
  * Seite „Fehlerreport“.
@@ -35,6 +37,8 @@ export default function ErrorReportPage() {
   const [filters, setFilters] = useState<ErrorsFilters>({});
   /** Zeilen des aktuellen Resultsets. */
   const [rows, setRows] = useState<ErrorRow[]>([]);
+  /** Fehler Statistik */
+  const [errorStats, setErrorStats] = useState<ErrorsStatsDto | null>(null);
   /** Lade-/Fehlerzustand. */
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +70,7 @@ export default function ErrorReportPage() {
         filters,
       });
       setRows(dto.rows);
+      setErrorStats(dto.errorStats ?? null);
     } catch (e: any) {
       setError(
         e?.response?.data?.message ??
@@ -133,6 +138,32 @@ export default function ErrorReportPage() {
           </>
         }
       />
+
+      <div className="errors__kpi-grid">
+        <ErrorStatsKpi
+          label="Gefilterte Zeilen"
+          value={errorStats?.total_filtered ?? 0}
+          loading={loading && !errorStats}
+        />
+
+        <ErrorStatsKpi
+          label="Datenfehler (ja)"
+          value={errorStats?.datenfehler_count ?? 0}
+          loading={loading && !errorStats}
+        />
+
+        <ErrorStatsKpi
+          label="Adressproblem (NICHT geocodierbar)"
+          value={errorStats?.by_error_class.ADDRESS_NOT_GEOCODABLE ?? 0}
+          loading={loading && !errorStats}
+        />
+
+        <ErrorStatsKpi
+          label="Adressproblem (geocodierbar)"
+          value={errorStats?.by_error_class.ADDRESS_GEOCODABLE ?? 0}
+          loading={loading && !errorStats}
+        />
+      </div>
 
       {showFilters && (
         <ErrorFilters
