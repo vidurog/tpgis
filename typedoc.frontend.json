@@ -1,0 +1,22 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "tsconfig": "apps/frontend/tsconfig.docs.json",
+  "entryPoints": [
+    "apps/frontend/src",
+    "apps/frontend/src/main.tsx",
+    "apps/frontend/src/App.tsx"
+  ],
+  "entryPointStrategy": "expand",
+
+  "out": "doku/frontend",
+  "name": "tp.gis • Frontend Code-Doku",
+
+  "excludePrivate": false,
+  "excludeProtected": false,
+  "excludeInternal": false,
+
+  "readme": "README.md",
+  "categorizeByGroup": true,
+
+  "exclude": ["**/vite-env.d.ts"]
+}

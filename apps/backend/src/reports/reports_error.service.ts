@@ -1,9 +1,9 @@
+// src/reports/reports_error.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import * as ExcelJS from 'exceljs';
 
-// Passe Pfad/Name auf deine Entity an (DB-Name = Entity-Name gleich)
 import { Customer } from 'src/customer/customer.entity';
 import {
   errorSortable,
@@ -17,7 +17,12 @@ export class ReportsErrorService {
     private readonly kundenRepo: Repository<Customer>,
   ) {}
 
-  // zentral definierte SQL ausdrücke
+  // ---------------------------------------------------------------------------
+  // Zentral definierte SQL-Ausdrücke (als Strings), die wir mehrfach wiederverwenden.
+  // Vorteil: konsistente Berechnung und ein Ort zum Ändern/Erweitern.
+  // Hinweis: Diese Ausdrücke werden via `addSelect(expr, alias)` als virtuelle
+  // Spalten in die Query gehängt.
+  // ---------------------------------------------------------------------------
   private readonly EXPR = {
     geocodable: `(k.geom IS NOT NULL OR k.gebref_oid IS NOT NULL)`,
     err_missing_rhythmus: `(k.besuchrhythmus IS NULL)`,
@@ -37,11 +42,16 @@ export class ReportsErrorService {
     err_missing_history: `(k.qs_besuch_historik IS NULL)`,
     err_missing_contact: `(k.telefon IS NULL AND k.mobil IS NULL)`,
     err_no_geocoding: `(k.geom IS NULL)`,
+    // Suche „Adresse geändert“ in der Begründung (bewusst Originalschreibweise „Addresse“)
     err_address_changed: `
       (COALESCE(k.begruendung_datenfehler,'') ILIKE '%Addresse geändert%')
     `,
   };
-  // zentral definierte SQL ausdrücke
+
+  // Klassifizierung von Adressproblemen:
+  // - ADDRESS_GEOCODABLE: Adresse hat Problem, ist aber prinzipiell geokodierbar (geom/gebref_oid vorhanden)
+  // - ADDRESS_NOT_GEOCODABLE: Problem und NICHT geokodierbar
+  // - NO_ADDRESS_ISSUE: kein Adressthema
   private readonly EXPR_ERROR_CLASS = `
     CASE
       WHEN ( ${this.EXPR.err_address_changed} OR ${this.EXPR.err_no_geocoding} ) THEN
@@ -52,7 +62,8 @@ export class ReportsErrorService {
       ELSE 'NO_ADDRESS_ISSUE'
     END
   `;
-  // zentral definierte SQL ausdrücke
+
+  // Zähle alle eingeschalteten Fehlerflags zu einer Gesamtzahl zusammen.
   private readonly EXPR_ERROR_COUNT = `
     (CASE WHEN ${this.EXPR.err_missing_rhythmus} THEN 1 ELSE 0 END) +
     (CASE WHEN ${this.EXPR.err_missing_kennung} THEN 1 ELSE 0 END) +
@@ -63,7 +74,7 @@ export class ReportsErrorService {
     (CASE WHEN ${this.EXPR.err_address_changed} THEN 1 ELSE 0 END)
   `;
 
-  // Whitelist
+  // Whitelist für sortierbare Felder (verhindert SQL-Injection durch freie Sort-Keys).
   private readonly SORT_MAP: Record<errorSortable, string> = {
     kundennummer: 'k.kundennummer',
     nachname: 'k.nachname',
@@ -84,7 +95,9 @@ export class ReportsErrorService {
     error_count: 'error_count',
   };
 
-  // ---- Basis-Query (SELECT + berechnete Felder) ----
+  // ---------------------------------------------------------------------------
+  // Basis-Query: aktive Kunden + berechnete Felder (Flags/Score/Klasse)
+  // ---------------------------------------------------------------------------
   private buildBaseQuery(): SelectQueryBuilder<Customer> {
     return this.kundenRepo
       .createQueryBuilder('k')
@@ -104,7 +117,9 @@ export class ReportsErrorService {
       .addSelect(this.EXPR_ERROR_COUNT, 'error_count');
   }
 
-  // ---- Filter anwenden  ----
+  // ---------------------------------------------------------------------------
+  // Filter anwenden: einfache Felder + boolsche Flags + Error-Klasse
+  // ---------------------------------------------------------------------------
   private applyFilters(
     qb: SelectQueryBuilder<Customer>,
     dto: ReportsErrorsQueryDto,
@@ -114,6 +129,7 @@ export class ReportsErrorService {
     if (dto.datenfehler !== undefined)
       qb.andWhere('k.datenfehler = :df', { df: dto.datenfehler });
 
+    // Hilfsfunktion für boolsche Filter (TRUE/FALSE) auf berechneten Ausdrücken.
     const boolFilter = <T extends keyof ReportsErrorsQueryDto>(
       field: T,
       expr: string,
@@ -135,6 +151,7 @@ export class ReportsErrorService {
     boolFilter('err_no_geocoding', this.EXPR.err_no_geocoding);
     boolFilter('err_address_changed', this.EXPR.err_address_changed);
 
+    // Klassen-Filter: leitet sich aus mehreren Flags ab (siehe EXPR_ERROR_CLASS).
     if (dto.error_class) {
       const addressIssue = `(${this.EXPR.err_address_changed} OR ${this.EXPR.err_no_geocoding})`;
       if (dto.error_class === 'NO_ADDRESS_ISSUE') {
@@ -147,9 +164,11 @@ export class ReportsErrorService {
     }
   }
 
-  // ---- JSON: Liste mit Sort + Pagination ----
+  // ---------------------------------------------------------------------------
+  // JSON: Liste mit Sortierung + Pagination + berechneten Feldern
+  // ---------------------------------------------------------------------------
   async listLatestErrors(dto: ReportsErrorsQueryDto) {
-    // total
+    // total (Count mit gleichen Filtern)
     const totalQb = this.buildBaseQuery();
     this.applyFilters(totalQb, dto);
     const total = await totalQb.getCount();
@@ -158,18 +177,18 @@ export class ReportsErrorService {
     const rowsQb = this.buildBaseQuery();
     this.applyFilters(rowsQb, dto);
 
-    // Sortierung
+    // Sortierung (nur whitelisted Keys)
     const sortKey: errorSortable = dto.orderBy ?? 'error_class';
     const sortCol = this.SORT_MAP[sortKey];
     const sortDir: 'ASC' | 'DESC' = dto.orderDir === 'ASC' ? 'ASC' : 'DESC';
     rowsQb.orderBy(sortCol, sortDir);
 
-    // Pagination
+    // Pagination (harte Obergrenze 200)
     const limit = Math.min(dto.limit ?? 50, 200);
     const offset = dto.offset ?? 0;
     rowsQb.take(limit).skip(offset);
 
-    // Rows
+    // Raw holen und in flache Objekte mappen (inkl. virtueller Spalten)
     const rowsRaw = await rowsQb.getRawMany<any>();
     const rows = rowsRaw.map(this.mapRow);
 
@@ -183,7 +202,9 @@ export class ReportsErrorService {
     };
   }
 
-  // ---- XLSX-Export (alle gefilterten Zeilen, Pagination ignoriert) ----
+  // ---------------------------------------------------------------------------
+  // XLSX-Export: alle gefilterten Zeilen (Pagination wird ignoriert)
+  // ---------------------------------------------------------------------------
   async exportLatestErrorsXlsx(
     dto: ReportsErrorsQueryDto,
   ): Promise<{ filename: string; buffer: Buffer }> {
@@ -199,9 +220,11 @@ export class ReportsErrorService {
     const rowsRaw = await qb.getRawMany<any>();
     const rows = rowsRaw.map(this.mapRow);
 
+    // Workbook/Worksheet erzeugen
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Fehlerreport');
 
+    // Spalten-Header + Reihenfolge (bewusst sprechende Überschriften)
     ws.columns = [
       { header: 'Kundennummer', key: 'kundennummer', width: 18 },
       { header: 'Nachname', key: 'nachname', width: 18 },
@@ -214,7 +237,7 @@ export class ReportsErrorService {
       { header: 'Telefon', key: 'telefon', width: 16 },
       { header: 'Mobil', key: 'mobil', width: 16 },
       { header: 'Kennung', key: 'kennung', width: 16 },
-      { header: 'Besuchrhythmus', key: 'besuchrhythmus', width: 16 },
+      { header: 'Besuchsrhythmus', key: 'besuchrhythmus', width: 16 },
       { header: 'Historik', key: 'qs_besuch_historik', width: 14 },
       { header: 'Datenfehler', key: 'datenfehler', width: 12 },
       { header: 'Begründung', key: 'begruendung_datenfehler', width: 40 },
@@ -238,7 +261,7 @@ export class ReportsErrorService {
 
     rows.forEach((r) => ws.addRow(r));
 
-    // Optionale Formatierung: Kopf fett
+    // Kopfzeile hervorheben
     ws.getRow(1).font = { bold: true };
 
     const buffer = await wb.xlsx.writeBuffer();
@@ -248,7 +271,11 @@ export class ReportsErrorService {
     };
   }
 
-  // ---- Mapping Raw → flaches JSON ----
+  // ---------------------------------------------------------------------------
+  // Mapping Raw-Result → flaches JSON mit sinnvoll typisierten Feldern.
+  // - `getRawMany` liefert Aliasse wie `k_nachname` etc.; hier in sprechende Keys gemappt.
+  // - boolean/number-Strings werden in echte `boolean`/`number` konvertiert.
+  // ---------------------------------------------------------------------------
   private mapRow = (r: any) => ({
     kundennummer: r.k_kundennummer,
     nachname: r.k_nachname,

@@ -1,6 +1,9 @@
 import { http } from "../shared/lib/http";
 
-/** Sortkeys gemäß SORT_MAP im Backend */
+/**
+ * Sortierschlüssel, die dem `SORT_MAP` im Backend entsprechen.
+ * Verwende diese Keys für `orderBy`, um eine stabile Sortierung zu bekommen.
+ */
 export type ErrorOrderKey =
   | "kundennummer"
   | "nachname"
@@ -20,34 +23,58 @@ export type ErrorOrderKey =
   | "error_class"
   | "error_count";
 
+/**
+ * Einfache Klassifikation von Adress-Problemen.
+ * - `NO_ADDRESS_ISSUE`: Keine Adressprobleme
+ * - `ADDRESS_GEOCODABLE`: Adresse fehlerhaft, aber (noch) geokodierbar
+ * - `ADDRESS_NOT_GEOCODABLE`: Adresse nicht geokodierbar
+ */
 export type ErrorClass =
   | "NO_ADDRESS_ISSUE"
   | "ADDRESS_GEOCODABLE"
   | "ADDRESS_NOT_GEOCODABLE";
 
-/** Zeilenform gemäß mapRow() im Backend */
+/**
+ * Zeilenform gemäß `mapRow()` im Backend.
+ * Repräsentiert eine aggregierte Sicht auf Datenfehler je Kunde/Datensatz.
+ */
 export type ErrorRow = {
+  /** Kundennummer (ggf. abgeleitet/normalisiert) */
   kundennummer: string | null;
   nachname: string | null;
   vorname: string | null;
+  /** Straßenname (ggf. unkorrigiert aus Quelle) */
   strasse: string | null;
+  /** Hausnummer (als Text, um Zusätze zuzulassen) */
   hnr: string | null;
+  /** Adresszusatz (z. B. Buchstaben hinter der HNr) */
   adz: string | null;
+  /** Postleitzahl; Backend liefert hier Zahl oder null */
   plz: number | null;
   ort: string | null;
   telefon: string | null;
   mobil: string | null;
+  /** Pflegegrad/Kennung */
   kennung: string | null;
+  /** Besuchsrhythmus (frei-text oder Katalog) */
   besuchrhythmus: string | null;
+  /** Historik-Feld aus QS */
   qs_besuch_historik: string | null;
+  /** Sammel-Flag „dieser Datensatz hat einen Datenfehler“ */
   datenfehler: boolean | null;
+  /** Freitext-Begründung (falls vorhanden) */
   begruendung_datenfehler: string | null;
+  /** Kunde aktiv? */
   aktiv: boolean;
 
+  /** Adresse prinzipiell geokodierbar? */
   geocodable: boolean;
+  /** Adressfehlerklasse */
   error_class: ErrorClass;
+  /** Anzahl gesetzter Fehlerflags */
   error_count: number;
 
+  /** Einzelne Fehlerflags (vom Backend abgeleitet) */
   err_missing_rhythmus: boolean;
   err_missing_kennung: boolean;
   err_inconsistent_kennung_rhythmus: boolean;
@@ -57,6 +84,9 @@ export type ErrorRow = {
   err_address_changed: boolean;
 };
 
+/**
+ * Filter für den Fehlerreport. Nur definierte/nicht-leere Felder werden an die API übergeben.
+ */
 export type ErrorsFilters = {
   plz?: string | number;
   ort?: string;
@@ -74,15 +104,40 @@ export type ErrorsFilters = {
   err_address_changed?: boolean;
 };
 
+/**
+ * DTO für die Paginierung/Sicht des Fehlerreports.
+ */
 export type ErrorsDto = {
+  /** Gesamtanzahl (Server-seitig bestimmt, sonst Fallback auf `rows.length`) */
   total: number;
+  /** Seitengröße */
   limit: number;
+  /** Offset der ersten Zeile */
   offset: number;
+  /** Sortier-Spalte */
   orderBy: ErrorOrderKey;
+  /** Sortierrichtung */
   orderDir: "ASC" | "DESC";
+  /** Datensätze der aktuellen Seite */
   rows: ErrorRow[];
 };
 
+/**
+ * Lädt den Fehlerreport (paginierbar + sortierbar + filterbar).
+ *
+ * @param params Paginierung, Sortierung und optionale Filter.
+ * @returns Ein {@link ErrorsDto} mit `rows` und Metadaten.
+ *
+ * @example
+ * ```ts
+ * const data = await listErrors({
+ *   limit: 25,
+ *   orderBy: "error_class",
+ *   orderDir: "DESC",
+ *   filters: { geocodable: false }
+ * });
+ * ```
+ */
 export async function listErrors(params?: {
   limit?: number;
   offset?: number;
@@ -128,6 +183,23 @@ export async function listErrors(params?: {
   };
 }
 
+/**
+ * Erzeugt die Download-URL für den XLSX-Export des Fehlerreports.
+ * Übergibt nur definierte Filterparameter.
+ *
+ * @param opts Optional: Filter, `orderBy`, `orderDir`
+ * @returns Absolute URL gegen `VITE_API_BASE_URL` (oder `http://localhost:3000`)
+ *
+ * @example
+ * ```ts
+ * const href = errorsExportUrl({
+ *   orderBy: "error_class",
+ *   orderDir: "DESC",
+ *   filters: { geocodable: false }
+ * });
+ * window.location.href = href;
+ * ```
+ */
 export function errorsExportUrl(opts: {
   filters?: ErrorsFilters;
   orderBy?: ErrorOrderKey;

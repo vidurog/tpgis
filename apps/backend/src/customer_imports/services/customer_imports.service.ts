@@ -6,8 +6,9 @@ import { ImportValidationService } from './import-validation.service';
 import { StagingWriterService } from './staging-writer.service';
 import { StagingDto } from '../dto/stage-import.dto';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
+import { ErrorFactory } from 'src/util/ErrorFactory';
 
-type ImportRun = { import_id: string; user: string };
+export type ImportMeta = { import_id: string; user: string };
 const BATCH_SIZE = 200;
 
 @Injectable()
@@ -20,7 +21,24 @@ export class CustomerImportsService {
     private readonly runService: CustomerImportsRunsService,
   ) {}
 
-  async importXlsxToStaging(filePath: string, run: ImportRun) {
+  /**
+   * Liest eine **.xlsx**-Datei ein und schreibt die normalisierten,
+   * validierten Datensätze in die **Staging**-Tabelle.
+   *
+   * Pipeline (pro Zeile):
+   * 1) `ExcelReaderService.rows` → Rohzeile
+   * 2) `ImportMappingService.mapToStaging` → Staging-DTO (Spaltenmapping + Transform)
+   * 3) `ImportValidationService.coerce/validate` → Normalisieren & Validieren
+   * 4) Batch sammeln und via `StagingWriterService.bulkInsert` einfügen
+   * 5) Importlauf in `CustomerImportsRunsService` registrieren
+   *
+   * @param filePath Absoluter Pfad zur **.xlsx**-Datei
+   * @param run Import-Metadaten (ID/Benutzer)
+   * @returns Zusammenfassung `{ seen, staged, failed, import_id }`
+   * @throws ErrorFactory.notXlsx wenn die Datei nicht auf `.xlsx` endet
+   */
+  async importXlsxToStaging(filePath: string, run: ImportMeta) {
+    if (!filePath.endsWith('.xlsx')) throw ErrorFactory.notXlsx();
     const imported_at = new Date();
     let seen = 0,
       staged = 0,
@@ -36,12 +54,7 @@ export class CustomerImportsService {
       batch = [];
     };
 
-    // 2) Kunden_import DTO setzen -> zu batch zufügen
-    // ReaderService -> row
-    // row -> MappingService -> dto
-    // dto -> ValidationService -> dto
-    // dto -> batch
-    // batch -> flush
+    // 2) Reader → Mapping → Validation → Batch
     for await (const rawRow of this.reader.rows(filePath)) {
       seen++;
 
@@ -64,10 +77,10 @@ export class CustomerImportsService {
     }
 
     await flush();
-    // TODO errors handling
+    // TODO: Fehler-Handling (Persistenz/Report)
     console.error(errors);
 
-    // 3) Add Import to ImportRun Database
+    // 3) Importlauf registrieren
     this.runService.addImport(
       String(run.import_id),
       imported_at,

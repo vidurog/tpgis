@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import Button from "./Button";
 import { listImportRuns, type ImportRun } from "../api/imports.api";
 
+/**
+ * Liste der Import-Runs (Metadaten).
+ *
+ * @param onSelect   Optional: meldet ausgewählte `runId` (derzeit auskommentiert)
+ * @param reloadKey  Ändert sich der Key, wird neu geladen
+ * @param selectedId Vorbelegung der Selektion
+ */
 export default function RunsList({
   onSelect,
   reloadKey = 0, // ändert sich => neu laden
@@ -18,6 +25,7 @@ export default function RunsList({
   // API Values
   const [rows, setRows] = useState<ImportRun[]>([]);
 
+  /** Lädt Runs von der API. */
   async function load() {
     setLoading(true);
     setError(null);
@@ -41,6 +49,11 @@ export default function RunsList({
     setActiveId(selectedId ?? null);
   }, [selectedId]);
 
+  /**
+   * Item-Klick: toggelt Auswahl (derzeit nur lokale Markierung).
+   * @remarks
+   * Das Setzen/Auslösen über `onSelect` ist bewusst auskommentiert.
+   */
   function handleClick(run: ImportRun) {
     const id = String(run.id);
     const next = activeId === id ? null : id;

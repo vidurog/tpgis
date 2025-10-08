@@ -1,36 +1,42 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { CustomerImport } from './customer_imports/customer_imports.entity';
-import { CustomerImportsModule } from './customer_imports/customer_imports.module';
 import { Customer } from './customer/customer.entity';
 import { CustomerImportRuns } from './customer_imports_runs/customer_imports_runs.entity';
+import { CustomerImportsModule } from './customer_imports/customer_imports.module';
 import { ReportsModule } from './reports/reports.module';
+
+// ✅ Migration als Klasse importieren (sicherste Variante im Nest-Runtime)
+import { CreateKundenImport1710010000000 } from './migrations/1710010000000_create_kunden_import.migration';
+import path from 'path';
+// (Alternative: per Glob – siehe Kommentar unten)
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (cs: ConfigService) => ({
         type: 'postgres',
-        host: cs.get('DB_HOST'),
-        port: parseInt(cs.get('DB_PORT') ?? '5432', 10),
-        username: cs.get('DB_USER'),
-        password: cs.get('DB_PASS'),
-        database: cs.get('DB_NAME'),
+        host: cs.get<string>('DB_HOST') ?? 'localhost',
+        port: parseInt(cs.get<string>('DB_PORT') ?? '5432', 10),
+        username: cs.get<string>('DB_USER') ?? 'app',
+        password: cs.get<string>('DB_PASSWORD') ?? 'app',
+        database: cs.get<string>('DB_NAME') ?? 'tpgis_healthcare',
+
         entities: [CustomerImport, Customer, CustomerImportRuns],
+        migrations: [path.join(__dirname, 'migrations/*.migration.ts')],
+
         synchronize: false,
         migrationsRun: true,
       }),
     }),
-    // Stellen REST Endpunkte der App zur verfuegung
+
     CustomerImportsModule,
     ReportsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

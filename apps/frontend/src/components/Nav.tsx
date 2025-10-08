@@ -1,7 +1,14 @@
 import "./styles/Nav.css";
 
+/** Tabs der Anwendung. */
 export type Tab = "import" | "errors";
 
+/**
+ * Einfache App-Navigation zwischen „Kunden Import“ und „Fehlerreport“.
+ *
+ * @param current Aktiver Tab
+ * @param onChange Wechsel-Callback
+ */
 export default function Nav({
   current,
   onChange,

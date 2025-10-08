@@ -1,6 +1,17 @@
 import "./styles/MergeButton.css";
 import Button from "./Button";
 
+/**
+ * Aktionbutton zum Auslösen eines Merges für einen ausgewählten Import-Run.
+ *
+ * @param runId  Aktuell ausgewählte Run-ID; ohne ID ist der Button deaktiviert
+ * @param onClick Callback, erhält die `runId` bei Klick
+ *
+ * @example
+ * ```tsx
+ * <MergeButton runId={selected} onClick={(id) => doMerge(id)} />
+ * ```
+ */
 export default function MergeButton({
   runId,
   onClick,
@@ -10,6 +21,7 @@ export default function MergeButton({
 }) {
   const disabled = !runId;
 
+  /** Klickhandler: meldet die aktuelle `runId` an {@link onClick}. */
   function handleClick() {
     if (!runId) return;
     // Noch kein Backend-Call – nur Demo:

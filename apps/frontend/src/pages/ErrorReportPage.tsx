@@ -12,20 +12,48 @@ import {
   type ErrorOrderKey,
 } from "../api/errors.api";
 
+/**
+ * Seite „Fehlerreport“.
+ *
+ * - Zeigt eine filter-/sortierbare Tabelle mit Fehlerdatensätzen.
+ * - Bietet Export als Excel (XLSX).
+ * - Clientseitige Pagination via `limit`/`offset`.
+ *
+ * @remarks
+ * Diese Seite koordiniert lediglich UI-State und API-Calls
+ * (via {@link listErrors} / {@link errorsExportUrl}). Die Darstellung liegt in
+ * {@link ErrorFilters} und {@link ErrorTable}.
+ *
+ * @example
+ * ```tsx
+ * // In einem Router:
+ * <Route path="/reports/errors" element={<ErrorReportPage />} />
+ * ```
+ */
 export default function ErrorReportPage() {
+  /** Aktive Filter (PLZ, Ort, Flags, etc.). */
   const [filters, setFilters] = useState<ErrorsFilters>({});
+  /** Zeilen des aktuellen Resultsets. */
   const [rows, setRows] = useState<ErrorRow[]>([]);
+  /** Lade-/Fehlerzustand. */
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /** Pagination + Sortierung. */
   const [limit, setLimit] = useState(50);
   const [offset, setOffset] = useState(0);
   const [orderBy, setOrderBy] = useState<ErrorOrderKey>("error_class");
   const [orderDir, setOrderDir] = useState<"ASC" | "DESC">("DESC");
 
+  /** Key zum manuell getriggerten Reload. */
   const [reloadKey, setReloadKey] = useState(0);
+  /** Sichtbarkeit der Filterleiste. */
   const [showFilters, setShowFilters] = useState(false);
 
+  /**
+   * Lädt die aktuelle Seite basierend auf State (Filter, Sortierung, Pagination).
+   * @internal
+   */
   async function load() {
     setLoading(true);
     setError(null);
@@ -49,22 +77,35 @@ export default function ErrorReportPage() {
     }
   }
 
+  // Initialer Load
   useEffect(() => {
     load(); /* initial */
   }, []);
+  // Reload bei Abhängigkeiten
   useEffect(() => {
     load(); /* on deps */
   }, [limit, offset, orderBy, orderDir, filters, reloadKey]);
 
+  /** Pager: Zurück möglich? */
   const canPrev = offset > 0;
-  const canNext = rows.length === limit; // simpel: nächste Seite probieren
+  /** Pager: Weiter möglich? (Heuristik über Seitengröße) */
+  const canNext = rows.length === limit;
 
+  /**
+   * Sortierwechsel-Handler aus der Tabelle.
+   * @param col Spalte
+   * @param dir Richtung
+   */
   function onSort(col: ErrorOrderKey, dir: "ASC" | "DESC") {
     setOrderBy(col);
     setOrderDir(dir);
     setOffset(0);
   }
 
+  /**
+   * Öffnet die XLSX-Export-URL in einem neuen Tab.
+   * @remarks Verwendet die aktuellen Filter/Sortierparameter.
+   */
   function exportXlsx() {
     const url = errorsExportUrl({ filters, orderBy, orderDir });
     window.open(url, "_blank");

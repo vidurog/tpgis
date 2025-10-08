@@ -9,6 +9,7 @@ import {
 } from "../api/imports.api";
 import ImportFilter from "./ImportFilter";
 
+/** Spalten, nach denen die Tabelle sortiert werden kann. */
 type OrderKey =
   | "imported_at"
   | "import_id"
@@ -18,6 +19,10 @@ type OrderKey =
   | "plz"
   | "ort";
 
+/**
+ * Kleiner Sortindikator für den Tabellenkopf.
+ * @internal
+ */
 function SortIndicator({
   active,
   dir,
@@ -32,6 +37,17 @@ function SortIndicator({
   );
 }
 
+/**
+ * Paginierte und sortierbare Tabelle für `kunden_import`.
+ *
+ * @param import_id Optionaler externer Filter (zeigt nur betreffende Importe)
+ *
+ * @example
+ * ```tsx
+ * <ImportTable />
+ * <ImportTable import_id="42" />
+ * ```
+ */
 export default function ImportTable({
   import_id, // optional: Filter; default = alle
 }: {
@@ -51,6 +67,7 @@ export default function ImportTable({
 
   const [showFilters, setShowFilters] = useState(false);
 
+  /** Wechselt Sortierkriterium/-richtung. */
   function changeSort(key: OrderKey) {
     setOffset(0); // auf Seite 1
     if (orderBy === key) {
@@ -61,6 +78,7 @@ export default function ImportTable({
     }
   }
 
+  /** Lädt die aktuelle Seite anhand von State (limit/offset/order/filters). */
   async function load() {
     setLoading(true);
     setError(null);
@@ -242,6 +260,10 @@ export default function ImportTable({
     </div>
   );
 
+  /**
+   * Erzeugt einen sortierbaren Tabellenkopf.
+   * @internal
+   */
   function FilterableHeader(label: string, value: OrderKey) {
     const aria =
       orderBy === value

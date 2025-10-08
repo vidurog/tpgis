@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "tsconfig": "apps/backend/tsconfig.docs.json",
+  "entryPoints": ["apps/backend/src"],
+  "entryPointStrategy": "expand",
+
+  "out": "doku/backend",
+  "name": "tp.gis • Backend Code-Doku",
+
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+
+  "readme": "README.md",
+  "categorizeByGroup": true
+}

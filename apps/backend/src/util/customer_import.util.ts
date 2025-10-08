@@ -1,26 +1,3 @@
-export function normalizeCellValue(v: any): any {
-  if (v == null) return null;
-  if (typeof v === 'object') {
-    if ('result' in v) return normalizeCellValue(v.result); // Formel → Ergebnis
-    if ('text' in v) return String((v as any).text);
-    if ('richText' in v)
-      return (v as any).richText.map((r: any) => r.text).join('');
-  }
-  if (v instanceof Date) return v;
-  if (typeof v === 'number') return v;
-  return String(v).trim();
-}
-
-export function normCell(v: any): any {
-  if (v == null) return null;
-  if (typeof v === 'object') {
-    if ('result' in v) return normCell(v.result); // Formel → Ergebnis
-    if ('text' in v) return String(v.text);
-    if ('richText' in v) return v.richText.map((r: any) => r.text).join('');
-  }
-  return v instanceof Date ? v : typeof v === 'number' ? v : String(v).trim();
-}
-
 export function normalizeKey(k: any): string {
   const s = String(k ?? '')
     .trim()
