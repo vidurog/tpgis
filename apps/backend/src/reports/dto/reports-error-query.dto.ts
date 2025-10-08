@@ -33,6 +33,28 @@ const parseBool = (v: any) => {
   if (v === false || v === 'false') return false;
 };
 
+/** Typ für Error Statistik */
+export class ReportsErrorsStatsDto {
+  total_filtered!: number;
+  datenfehler_count!: number;
+  by_error_class!: {
+    NO_ADDRESS_ISSUE: number;
+    ADDRESS_GEOCODABLE: number;
+    ADDRESS_NOT_GEOCODABLE: number;
+  };
+}
+
+/** Typ für die Antwort vom Backend */
+export class ReportsErrorsListDto {
+  total!: number;
+  limit!: number;
+  offset!: number;
+  orderBy!: errorSortable;
+  orderDir!: 'ASC' | 'DESC';
+  rows!: any[]; // TODO typisierung
+  stats!: ReportsErrorsStatsDto;
+}
+
 export class ReportsErrorsQueryDto {
   // Pagination
   @IsOptional()
@@ -137,4 +159,12 @@ export class ReportsErrorsQueryDto {
     | 'ADDRESS_GEOCODABLE'
     | 'ADDRESS_NOT_GEOCODABLE'
     | 'NO_ADDRESS_ISSUE';
+
+  @IsOptional()
+  @IsString()
+  kundennummer?: string; // exakte oder partielle Suche
+
+  @IsOptional()
+  @IsString()
+  kundenname?: string;
 }

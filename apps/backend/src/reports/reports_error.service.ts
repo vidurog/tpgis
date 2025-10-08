@@ -129,6 +129,18 @@ export class ReportsErrorService {
     if (dto.datenfehler !== undefined)
       qb.andWhere('k.datenfehler = :df', { df: dto.datenfehler });
 
+    if (dto.kundennummer) {
+      qb.andWhere('k.kundennummer ILIKE :knr', {
+        knr: `%${dto.kundennummer}%`,
+      });
+    }
+
+    if (dto.kundenname) {
+      qb.andWhere('(k.nachname ILIKE :kname OR k.vorname ILIKE :kname)', {
+        kname: `%${dto.kundenname}%`,
+      });
+    }
+
     // Hilfsfunktion für boolsche Filter (TRUE/FALSE) auf berechneten Ausdrücken.
     const boolFilter = <T extends keyof ReportsErrorsQueryDto>(
       field: T,
@@ -173,6 +185,36 @@ export class ReportsErrorService {
     this.applyFilters(totalQb, dto);
     const total = await totalQb.getCount();
 
+    // Fehleranzahl. Gesamt + Kategorie als stats
+    const statsQb = this.buildBaseQuery();
+    this.applyFilters(statsQb, dto);
+    // keine Sortierung/Pagination
+    statsQb.select([]);
+    statsQb.addSelect('COUNT(*)', 'total_filtered');
+    statsQb.addSelect(
+      `SUM(CASE WHEN k.datenfehler = TRUE THEN 1 ELSE 0 END)`,
+      'datenfehler_count',
+    );
+    statsQb.addSelect(
+      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'NO_ADDRESS_ISSUE' THEN 1 ELSE 0 END)`,
+      'cnt_no_address_issue',
+    );
+    statsQb.addSelect(
+      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'ADDRESS_GEOCODABLE' THEN 1 ELSE 0 END)`,
+      'cnt_address_geocodable',
+    );
+    statsQb.addSelect(
+      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'ADDRESS_NOT_GEOCODABLE' THEN 1 ELSE 0 END)`,
+      'cnt_address_not_geocodable',
+    );
+    const statsRaw = await statsQb.getRawOne<{
+      total_filtered: string;
+      datenfehler_count: string;
+      cnt_no_address_issue: string;
+      cnt_address_geocodable: string;
+      cnt_address_not_geocodable: string;
+    }>();
+
     // rows vorbereiten
     const rowsQb = this.buildBaseQuery();
     this.applyFilters(rowsQb, dto);
@@ -189,7 +231,7 @@ export class ReportsErrorService {
     rowsQb.take(limit).skip(offset);
 
     // Raw holen und in flache Objekte mappen (inkl. virtueller Spalten)
-    const rowsRaw = await rowsQb.getRawMany<any>();
+    const rowsRaw = await rowsQb.getRawMany<any>(); // TODO row typisierung
     const rows = rowsRaw.map(this.mapRow);
 
     return {
@@ -199,6 +241,17 @@ export class ReportsErrorService {
       orderBy: sortKey,
       orderDir: sortDir,
       rows,
+      stats: {
+        total_filtered: Number(statsRaw?.total_filtered ?? 0),
+        datenfehler_count: Number(statsRaw?.datenfehler_count ?? 0),
+        by_error_class: {
+          NO_ADDRESS_ISSUE: Number(statsRaw?.cnt_no_address_issue ?? 0),
+          ADDRESS_GEOCODABLE: Number(statsRaw?.cnt_address_geocodable ?? 0),
+          ADDRESS_NOT_GEOCODABLE: Number(
+            statsRaw?.cnt_address_not_geocodable ?? 0,
+          ),
+        },
+      },
     };
   }
 
@@ -300,14 +353,6 @@ export class ReportsErrorService {
     qs_besuch_hinweis_1: r.k_qs_besuch_hinweis_1,
     qs_besuch_hinweis_2: r.k_qs_besuch_hinweis_2,
     geom: r.k_geom,
-    planmonat: r.k_planmonat,
-    termin: r.k_termin,
-    termindauer_min: r.k_termindauer_min,
-    terminstatus: r.k_terminstatus,
-    termingrund: r.k_termingrund,
-    reihenfolge_nr: r.k_reihenfolge_nr,
-    parken: r.k_parken,
-    bemerkung: r.k_bemerkung,
     datenfehler: r.k_datenfehler,
     begruendung_datenfehler: r.k_begruendung_datenfehler,
     aktiv: r.k_aktiv,

@@ -61,7 +61,7 @@ export class CustomerMergeService {
    *
    * Pipeline (pro Zeile):
    * 1. **DTO bauen** → Grundstruktur aus Importzeile
-   * 2. **Normalisieren** → Name, Straße/Hausnr./Zusatz, Telefon/Mobil (E.164), Kennung, Ort, Kundennummer, Planmonat
+   * 2. **Normalisieren** → Name, Straße/Hausnr./Zusatz, Telefon/Mobil (E.164), Kennung, Ort, Kundennummer
    * 3. **Geokodierung** → zuerst DB-Match (Gebäudereferenz, T0 exakt), danach **Fallback** via NRW OGC-API
    * 4. **Validieren** → Datenfehler ermitteln, Begründung setzen
    * 5. **Upsert-Batch** → Werte sammeln (Geom ggf. als SQL-Funktion), in Batches schreiben
