@@ -26,7 +26,6 @@ export class CustomerWriterService {
    * @returns Query-Ergebnis (u. a. mit `raw` samt `xmax`)
    */
   async bulkInsert(batch: Array<QueryDeepPartialEntity<Customer>>) {
-    const knr_debug: Record<string, number> = {};
     if (!batch.length) return;
 
     // 3.1) Spalten ermitteln, die bei Konflikt überschrieben werden sollen

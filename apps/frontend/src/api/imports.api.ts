@@ -210,3 +210,19 @@ export async function listCustomerImports(params?: {
     rows,
   };
 }
+
+/**
+ * Startet das „Merge“ des zuvor hochgeladenen Imports in die Zieltabelle(n).
+ *
+ * @param import_id ID eines vorhandenen Imports (siehe {@link uploadImportExcel}).
+ * @returns Backend-Antwort (typisiert als `any`-ähnlich).
+ *
+ * @example
+ * ```ts
+ * await mergeExcelFile(resp.import_id);
+ * ```
+ */
+export async function mergeExcelFile(import_id: string | number | undefined) {
+  const res = await http.post(`customer-imports/${import_id}/merge`);
+  return res.data ?? {};
+}

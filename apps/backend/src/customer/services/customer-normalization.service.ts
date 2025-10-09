@@ -219,10 +219,13 @@ export class CustomerNormalization {
    * @returns generierte Kundennummer (z. B. `"MUST1994"`)
    */
   createKundennummer(nachname: string, geburtstag: Date | null): string {
-    const jahr = geburtstag?.toISOString().slice(0, 4);
-    return geburtstag
-      ? nachname.slice(0, 4).toUpperCase() + jahr
-      : nachname + 'XX';
+    if (geburtstag) {
+      const monat = geburtstag.getMonth() + 1; // DEBUG DEPRECATED
+      const jahr = geburtstag.getFullYear();
+      return `${nachname.slice(0, 5)}${jahr}`;
+    } else {
+      return nachname + 'XXXX';
+    }
   }
 
   /**

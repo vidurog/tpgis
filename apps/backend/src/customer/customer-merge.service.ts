@@ -82,6 +82,7 @@ export class CustomerMergeService {
 
     let inserted: number = 0;
     let updated: number = 0;
+    let duplicates: string[] = [];
     let batch: Array<QueryDeepPartialEntity<Customer>> = [];
 
     // Batch über WriterService in CB schreiben
@@ -224,6 +225,13 @@ export class CustomerMergeService {
           `ST_SetSRID(ST_MakePoint(${point.lon}, ${point.lat}),4326)`;
       }
 
+      // 2.4) Duplikate filtern. Match first.
+      if (seen.has(customer.kundennummer)) {
+        duplicates.push(customer.vorname, customer.nachname);
+        console.log('Merge duplicates:', duplicates); // DEBUG
+        continue;
+      }
+
       // 2.4) In Batch übernehmen
       batch.push(values as QueryDeepPartialEntity<Customer>);
 
@@ -243,6 +251,12 @@ export class CustomerMergeService {
     // 5) ImportRun merged = true
     this.runService.mergeImport(import_id);
 
-    return { import_id, inserted, updated, total: inserted + updated };
+    return {
+      import_id,
+      inserted,
+      updated,
+      total: inserted + updated,
+      duplicates,
+    };
   }
 }
