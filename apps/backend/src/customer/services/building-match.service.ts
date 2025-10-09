@@ -98,7 +98,7 @@ export class BuildingMatchService {
           r.ort_src    AS ort,
           ST_X(r.geom_4326) AS lon,
           ST_Y(r.geom_4326) AS lat
-        FROM tp_gis.gebref_norm r,
+        FROM gebref_norm r,
              ( SELECT
                  lower(unaccent($1))                                AS kreis_in,
                  lower(unaccent(topogrids.tg_norm_street_name($2))) AS street_in,
