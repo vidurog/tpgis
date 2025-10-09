@@ -63,6 +63,6 @@ export class CustomerValidationService {
 
     // TODO weitere Validierungen
 
-    return errors.length > 0 ? errors.join('\n') : null;
+    return errors.length > 0 ? errors.join(' | ') : null;
   }
 }
