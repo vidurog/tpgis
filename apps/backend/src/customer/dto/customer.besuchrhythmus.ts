@@ -18,12 +18,9 @@
  * ```
  */
 export enum CUSTOMER_BESUCHRHYTHMUS {
-  /** Pflegegrad 1 → Besuchs­rhythmus **alle 1 Monat**. */
-  Pflegegrad1 = '1 Monat',
+  Pflegegrad123 = '6 Monate', // Monate
 
-  /** Pflegegrad 2 → Besuchs­rhythmus **alle 3 Monate**. */
-  Pflegegrad2 = '3 Monate',
+  Pflegegrad45 = '3 Monate', // Monate
 
-  /** Pflegegrad 3 → Besuchs­rhythmus **alle 6 Monate**. */
-  Pflegegrad3 = '6 Monate',
+  KeinPflegegrad = '0',
 }

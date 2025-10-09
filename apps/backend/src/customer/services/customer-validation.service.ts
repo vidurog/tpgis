@@ -29,24 +29,30 @@ export class CustomerValidationService {
   validate(customer: CustomerDTO, rawStrasse: string): string | null {
     // Mapping: Kennung → erwarteter Besuchsrhythmus
     const kennung_rhythmus: Record<string, string> = {};
-    kennung_rhythmus['Pflegegrad 1'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad1;
-    kennung_rhythmus['Pflegegrad 2'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2;
-    kennung_rhythmus['Pflegegrad 3'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad3;
+    kennung_rhythmus['Pflegegrad 1'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
+    kennung_rhythmus['Pflegegrad 2'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
+    kennung_rhythmus['Pflegegrad 3'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
+    kennung_rhythmus['Pflegegrad 4'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad45;
+    kennung_rhythmus['Pflegegrad 5'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad45;
 
     let errors: string[] = [];
 
+    // Value Null errors
     if (!customer.besuchrhythmus) errors.push('Kein Besuchrhythmus');
     if (!customer.kennung) errors.push('Keine Kennung');
-    if (
-      customer.besuchrhythmus &&
-      kennung_rhythmus[customer.kennung!] !== customer.besuchrhythmus
-    )
-      errors.push('Inkonsistent Kennung/Rhythmus');
     if (!customer.qs_besuch_historik) errors.push('Keine Historik');
-    if (!customer.telefon && !customer.mobil)
-      errors.push('Keine Telefon/Mobil Nummer');
     if (!customer.geom) errors.push('Keine Geokodierung');
     if (!customer.geburtstag) errors.push('Kein Geburtstag');
+    if (!customer.telefon && !customer.mobil)
+      errors.push('Keine Telefon/Mobil Nummer');
+
+    if (
+      customer.besuchrhythmus &&
+      customer.kennung &&
+      kennung_rhythmus[customer.kennung!] !== customer.besuchrhythmus
+    ) {
+      errors.push('Inkonsistent Kennung/Rhythmus');
+    }
 
     // Check ob Straße verändert/normalisiert werden musste
     const ganzeStr =

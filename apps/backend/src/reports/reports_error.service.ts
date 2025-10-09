@@ -28,16 +28,7 @@ export class ReportsErrorService {
     err_missing_rhythmus: `(k.besuchrhythmus IS NULL)`,
     err_missing_kennung: `(k.kennung IS NULL)`,
     err_inconsistent_kennung_rhythmus: `
-      CASE
-        WHEN k.besuchrhythmus IS NOT NULL THEN
-          CASE
-            WHEN k.kennung = 'Pflegegrad 1' AND k.besuchrhythmus <> '1 Monat' THEN TRUE
-            WHEN k.kennung = 'Pflegegrad 2' AND k.besuchrhythmus <> '3 Monate' THEN TRUE
-            WHEN k.kennung = 'Pflegegrad 3' AND k.besuchrhythmus <> '6 Monate' THEN TRUE
-            ELSE FALSE
-          END
-        ELSE FALSE
-      END
+      (COALESCE(k.begruendung_datenfehler,'') ILIKE '%Inkonsistent%')
     `,
     err_missing_history: `(k.qs_besuch_historik IS NULL)`,
     err_missing_contact: `(k.telefon IS NULL AND k.mobil IS NULL)`,

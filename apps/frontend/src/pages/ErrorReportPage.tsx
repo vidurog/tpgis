@@ -11,6 +11,7 @@ import {
   type ErrorRow,
   type ErrorOrderKey,
   type ErrorsStatsDto,
+  type ErrorsDto,
 } from "../api/errors.api";
 import ErrorStatsKpi from "../components/ErrorsStatsKPI";
 
@@ -62,7 +63,7 @@ export default function ErrorReportPage() {
     setLoading(true);
     setError(null);
     try {
-      const dto = await listErrors({
+      const dto: ErrorsDto = await listErrors({
         limit,
         offset,
         orderBy,

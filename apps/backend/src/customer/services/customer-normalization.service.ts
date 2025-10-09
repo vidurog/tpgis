@@ -197,7 +197,18 @@ export class CustomerNormalization {
     else if (kennung.includes('2')) return 'Pflegegrad 2';
     else if (kennung.includes('3')) return 'Pflegegrad 3';
     else if (kennung.includes('4')) return 'Pflegegrad 4';
+    else if (kennung.includes('5')) return 'Pflegegrad 5';
     else return 'Kein Pflegegrad';
+  }
+
+  normalizeBesuchrhythmus(besuchrhythmus: string | null) {
+    if (!besuchrhythmus) return null;
+    if (besuchrhythmus.includes('6') || besuchrhythmus.includes('halb')) {
+      return '6 Monate';
+    }
+    if (besuchrhythmus.includes('3') || besuchrhythmus.includes('viertel'))
+      return '3 Monate';
+    else return null;
   }
 
   /**

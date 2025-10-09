@@ -153,15 +153,18 @@ export class CustomerMergeService {
         this.normService.normalizeStrasse(customer.strasse!);
       customer.telefon = this.normService.normalizeToE164(customer.telefon);
       customer.mobil = this.normService.normalizeToE164(customer.mobil);
-      customer.kennung = this.normService.normalizeKennung(customer.kennung);
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
+      customer.kennung = this.normService.normalizeKennung(customer.kennung);
+      customer.besuchrhythmus = this.normService.normalizeBesuchrhythmus(
+        customer.besuchrhythmus,
+      );
+
+      // Kundennummer
       customer.kundennummer = this.normService.createKundennummer(
         customer.nachname,
         customer.geburtstag ?? null,
       );
-
-      // customer.besuchrhythmus = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2; // DEBUG
 
       // ------------------- DB Gebäudematch -------------------
       // T0: Exakt auf (Ort/Kreis, Straße normiert, Hausnummer numerisch, Suffix)
