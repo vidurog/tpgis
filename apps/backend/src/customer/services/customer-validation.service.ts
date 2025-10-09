@@ -46,6 +46,7 @@ export class CustomerValidationService {
     if (!customer.telefon && !customer.mobil)
       errors.push('Keine Telefon/Mobil Nummer');
     if (!customer.geom) errors.push('Keine Geokodierung');
+    if (!customer.geburtstag) errors.push('Kein Geburtstag');
 
     // Check ob Straße verändert/normalisiert werden musste
     const ganzeStr =
