@@ -157,10 +157,8 @@ export class CustomerMergeService {
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
       customer.kundennummer = this.normService.createKundennummer(
-        customer.vorname,
         customer.nachname,
-        customer.strasse,
-        customer.hnr,
+        customer.geburtstag ?? null,
       );
 
       // customer.besuchrhythmus = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2; // DEBUG

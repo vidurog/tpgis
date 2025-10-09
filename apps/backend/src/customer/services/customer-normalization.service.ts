@@ -201,33 +201,17 @@ export class CustomerNormalization {
   }
 
   /**
-   * Erzeugt eine einfache **Kundennummer** aus Vorname/Name/Straße (+ optional Hausnummer).
+   * Erzeugt eine einfache **Kundennummer** aus Nachname und Geburtsdatum.
    *
-   * @param vorname Vorname
-   * @param name Nachname
-   * @param strasse Straße
-   * @param hnr Hausnummer oder `null`
-   * @returns generierte Kundennummer (z. B. `"MAXMUSMUS12"`)
-   *
-   * @remarks
-   * - Verwendet je 3 Zeichen von Vorname/Name/Straße (Uppercase).
-   * - Hängt die Hausnummer an, ansonsten `"000"`.
-   * - **Hinweis**: `replace(' ', '')` entfernt nur das **erste** Leerzeichen.
-   *   Für eine aggressive Entfernung aller Leerzeichen wäre ein RegExp nötig.
+   * @param nachname Nachname
+   * @param geburtstag Geburtstdatum
+   * @returns generierte Kundennummer (z. B. `"MUST1994"`)
    */
-  createKundennummer(
-    vorname: string,
-    name: string,
-    strasse: string,
-    hnr: string | null,
-  ): string {
-    const kundennummer =
-      vorname.slice(0, 3).toUpperCase() +
-      name.slice(0, 3).toUpperCase() +
-      strasse.slice(0, 3).toUpperCase();
-    return hnr
-      ? (kundennummer + hnr).replace(' ', '')
-      : (kundennummer + '000').replace(' ', '');
+  createKundennummer(nachname: string, geburtstag: Date | null): string {
+    const jahr = geburtstag?.toISOString().slice(0, 4);
+    return geburtstag
+      ? nachname.slice(0, 4).toUpperCase() + jahr
+      : nachname + 'XX';
   }
 
   /**
