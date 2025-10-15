@@ -4,3 +4,4 @@ uploads
 .vscodestart.sh
 stop.sh
 start.sh
+run.bat
