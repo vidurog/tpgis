@@ -104,19 +104,25 @@ export class BuildingMatchService {
                  lower(unaccent(topogrids.tg_norm_street_name($2))) AS street_in,
                  NULLIF(topogrids.tg_house_no_num_part($3),'')::int AS hnr_in,
                  NULLIF(lower($4),'')                               AS adz_in,
-                 $5 plz_in
+                 $5                                                 AS plz_in,
+                 $6                                                 AS match_mode
                ) p
         WHERE 1=1 
-          AND (r.kreis_norm  = p.kreis_in OR $6='p')
+          AND (r.kreis_norm  = p.kreis_in OR match_mode='p')
           AND r.street_norm = p.street_in
           AND r.hnr_num     = p.hnr_in
-          AND (r.plz = p.plz_in OR $6='k')
+          AND (r.plz = p.plz_in OR match_mode='k')
           AND COALESCE(r.hnr_suffix,'') = COALESCE(p.adz_in,'')
         ORDER BY r.stichtag DESC
       `;
 
     // Parameterzuordnung:
-    // $1 := ort, $2 := str, $3 := hnr, $4 := adz
+    // $1 := ort, $2 := str, $3 := hnr, $4 := adz, $5 := plz, $6 := match_mode
+    // match_mode 'p' Suche mit Postleitzahl, Straße und Hausnummer
+    //            'k' Suche mit Kreis, Straße und Hausnummer
+    //                Wir akzeptieren nur eindeutige Ergebnisse, das heißt bei
+    //                Kombinationen Straße/Hausnummer, die in einem Ort/Kreis
+    //                unter mehreren Postleitzahlen vorkommen, geben wir null zurück
     let rows = await this.ds.query(sql, [ort, str, hnr, adz, plz,"p"]);
 
     if (!rows.length) {
@@ -124,7 +130,7 @@ export class BuildingMatchService {
     }
 
     if (rows.length>1) {
-      console.log("mehrere Treffer für ", plz, ort, str, hnr, adz);
+      console.log("mehrere Treffer für ", plz, ort, str, hnr, adz, rows);
     }
 
     // Kein oder mehrere Treffer → null (kein Fallback auf T1–T3 in dieser Methode).
