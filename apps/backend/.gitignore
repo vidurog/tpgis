@@ -1,4 +1,7 @@
 node_modules
 dist
 uploads
-.vscode
+.vscodestart.sh
+stop.sh
+start.sh
+run.bat

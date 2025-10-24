@@ -76,7 +76,7 @@ export class BuildingMatchService {
     hnr: string | null,
     adz: string | null,
     ort: string | null,
-    plz?: string | null, // TODO kommt nicht in Gebaeude vor
+    plz: string | null, // TODO kommt nicht in Gebaeude vor
   ): Promise<GebRefMatch | null> {
     // Exakter Treffer gegen die materialisierte Sicht `tp_gis.gebref_norm`.
     // - Eingaben werden in einem Subselect `p` normalisiert:
@@ -98,27 +98,43 @@ export class BuildingMatchService {
           r.ort_src    AS ort,
           ST_X(r.geom_4326) AS lon,
           ST_Y(r.geom_4326) AS lat
-        FROM tp_gis.gebref_norm r,
+        FROM gebref_norm r,
              ( SELECT
                  lower(unaccent($1))                                AS kreis_in,
                  lower(unaccent(topogrids.tg_norm_street_name($2))) AS street_in,
                  NULLIF(topogrids.tg_house_no_num_part($3),'')::int AS hnr_in,
-                 NULLIF(lower($4),'')                               AS adz_in
+                 NULLIF(lower($4),'')                               AS adz_in,
+                 $5                                                 AS plz_in,
+                 $6                                                 AS match_mode
                ) p
-        WHERE r.kreis_norm  = p.kreis_in
+        WHERE 1=1 
+          AND (r.kreis_norm  = p.kreis_in OR match_mode='p')
           AND r.street_norm = p.street_in
           AND r.hnr_num     = p.hnr_in
+          AND (r.plz = p.plz_in OR match_mode='k')
           AND COALESCE(r.hnr_suffix,'') = COALESCE(p.adz_in,'')
         ORDER BY r.stichtag DESC
-        LIMIT 1;
       `;
 
     // Parameterzuordnung:
-    // $1 := ort, $2 := str, $3 := hnr, $4 := adz
-    const rows = await this.ds.query(sql, [ort, str, hnr, adz]);
+    // $1 := ort, $2 := str, $3 := hnr, $4 := adz, $5 := plz, $6 := match_mode
+    // match_mode 'p' Suche mit Postleitzahl, Straße und Hausnummer
+    //            'k' Suche mit Kreis, Straße und Hausnummer
+    //                Wir akzeptieren nur eindeutige Ergebnisse, das heißt bei
+    //                Kombinationen Straße/Hausnummer, die in einem Ort/Kreis
+    //                unter mehreren Postleitzahlen vorkommen, geben wir null zurück
+    let rows = await this.ds.query(sql, [ort, str, hnr, adz, plz,"p"]);
 
-    // Kein Treffer → null (kein Fallback auf T1–T3 in dieser Methode).
-    if (!rows.length) return null;
+    if (!rows.length) {
+       rows = await this.ds.query(sql, [ort, str, hnr, adz, plz,"k"]);
+    }
+
+    if (rows.length>1) {
+      console.log("mehrere Treffer für ", plz, ort, str, hnr, adz, rows);
+    }
+
+    // Kein oder mehrere Treffer → null (kein Fallback auf T1–T3 in dieser Methode).
+    if (rows.length!==1) return null;
 
     // Ersten (besten) Treffer aufnehmen und in stark typisiertes Objekt mappen.
     const pick = rows[0];
