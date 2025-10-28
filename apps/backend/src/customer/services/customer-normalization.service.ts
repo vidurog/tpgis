@@ -218,11 +218,17 @@ export class CustomerNormalization {
    * @param geburtstag Geburtstdatum
    * @returns generierte Kundennummer (z. B. `"MUST1994"`)
    */
-  createKundennummer(nachname: string, geburtstag: Date | null): string {
+  createKundennummer(
+    nachname: string,
+    vorname: string,
+    geburtstag: Date | null,
+  ): string {
     if (geburtstag) {
-      const monat = geburtstag.getMonth() + 1; // DEBUG DEPRECATED
-      const jahr = geburtstag.getFullYear();
-      return `${nachname.slice(0, 5)}${jahr}`;
+      const day = geburtstag.getDate();
+      const month = geburtstag.getMonth() + 1;
+      const year = geburtstag.getFullYear();
+      const kundennummer = `${nachname}${vorname}${day}${month}${year};`;
+      return kundennummer;
     } else {
       return nachname + 'XXXX';
     }
