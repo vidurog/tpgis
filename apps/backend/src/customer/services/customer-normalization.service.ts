@@ -224,10 +224,10 @@ export class CustomerNormalization {
     geburtstag: Date | null,
   ): string {
     if (geburtstag) {
-      const day = geburtstag.getDate();
-      const month = geburtstag.getMonth() + 1;
+      const day = String(geburtstag.getDate()).padStart(2, '0');
+      const month = String(geburtstag.getMonth() + 1).padStart(2, '0');
       const year = geburtstag.getFullYear();
-      const kundennummer = `${nachname}${vorname}${day}${month}${year};`;
+      const kundennummer = `${nachname}${vorname}${day}${month}${year}`;
       return kundennummer;
     } else {
       return nachname + 'XXXX';

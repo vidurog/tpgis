@@ -4,7 +4,7 @@ import { ExcelReaderService } from './excel-reader.service';
 import { ImportMappingService } from './import-mapping.service';
 import { ImportValidationService } from './import-validation.service';
 import { StagingWriterService } from './staging-writer.service';
-import { StagingDto } from '../dto/stage-import.dto';
+import { StagingDto, ValidationError } from '../dto/stage-import.dto';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 import { ErrorFactory } from 'src/util/ErrorFactory';
 
@@ -43,7 +43,7 @@ export class CustomerImportsService {
     let seen = 0,
       staged = 0,
       failed = 0;
-    let errors: string[] = [];
+    let errors: ValidationError[] = [];
     let batch: StagingDto[] = [];
 
     // 1) Batch über WriterService in DB schreiben
@@ -72,13 +72,13 @@ export class CustomerImportsService {
         if (batch.length >= BATCH_SIZE) await flush();
       } else {
         failed++;
-        errors.push(dto.kunde ?? 'kein kunde');
+        res.errors.map((e) => errors.push(e));
       }
     }
 
     await flush();
     // TODO: Fehler-Handling (Persistenz/Report)
-    console.error(errors);
+    // console.error(errors); DEBUG
 
     // 3) Importlauf registrieren
     this.runService.addImport(
@@ -87,6 +87,8 @@ export class CustomerImportsService {
       run.user,
       staged,
     );
+
+    console.log('failed:', failed); //DEBUG
     return { seen, staged, failed, import_id: String(run.import_id) };
   }
 }
