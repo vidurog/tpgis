@@ -211,6 +211,20 @@ export class CustomerNormalization {
     else return null;
   }
 
+  normalizeKennungRhythmus(
+    kennung: string | null,
+    rhythmus: string | null,
+  ): [string | null, string | null] {
+    // TODO
+    if (!kennung && !rhythmus) return [null, null];
+    if (!kennung) {
+    }
+    if (!rhythmus) {
+    }
+
+    return ['hallo', 'test'];
+  }
+
   /**
    * Erzeugt eine einfache **Kundennummer** aus Nachname und Geburtsdatum.
    *

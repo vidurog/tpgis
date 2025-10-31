@@ -116,14 +116,6 @@ export class Customer {
   })
   geom: string | null; // ST_SetSRID(ST_MakePoint(lon,lat),4326)
 
-  /** Flag: Datensatz hat (noch) Datenfehler. */
-  @Column({ type: 'boolean', default: false })
-  datenfehler: boolean;
-
-  /** Begründung/Erklärung der Datenfehler. */
-  @Column({ type: 'text', nullable: true })
-  begruendung_datenfehler: string | null;
-
   /** Flag: Datensatz ist aktiv (wird z. B. beim Merge gepflegt). */
   @Column({ type: 'boolean', default: true })
   aktiv: boolean;

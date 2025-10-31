@@ -2,12 +2,14 @@
 import { Injectable } from '@nestjs/common';
 import { CustomerDTO } from '../dto/customer.dto';
 import { CUSTOMER_BESUCHRHYTHMUS } from '../dto/customer.besuchrhythmus';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CustomerError } from '../customer_errorrs.entity';
 
 @Injectable()
-export class CustomerValidationService {
+export class CustomerErrorService {
   /**
-   * Prüft einen `CustomerDTO` auf typische Datenfehler und gibt eine
-   * **Zeilenweise-Fehlerliste** als String zurück (oder `null`, wenn alles ok).
+   * Prüft einen `CustomerDTO` auf typische Datenfehler und persistiert diese
    *
    * Validierungen u. a.:
    * - Besuchsrhythmus vorhanden
@@ -20,12 +22,17 @@ export class CustomerValidationService {
    *
    * @param customer Zu prüfender Datensatz
    * @param rawStrasse Ursprüngliche Adresszeichenkette (vor Normalisierung)
-   * @returns `string` mit Fehlern getrennt durch `\n` oder `null`, wenn keine Fehler
    *
    * @remarks
    * Die Fehlermeldung "Addresse geändert" verwendet die Originalschreibweise aus deinem Code.
    * (Orthografie: „Adresse“ wäre mit einem „d“ – hier **keine** Codeänderung vorgenommen.)
    */
+
+  constructor(
+    @InjectRepository(CustomerError)
+    private readonly customerRepo: Repository<CustomerError>,
+  ) {}
+
   validate(customer: CustomerDTO, rawStrasse: string): string | null {
     // Mapping: Kennung → erwarteter Besuchsrhythmus
     const kennung_rhythmus: Record<string, string> = {};

@@ -25,7 +25,7 @@ export class CustomerWriterService {
    * @param batch Liste teilweiser Datensätze (upsert-fähig)
    * @returns Query-Ergebnis (u. a. mit `raw` samt `xmax`)
    */
-  async bulkInsert(batch: Array<QueryDeepPartialEntity<Customer>>) {
+  async bulkMerge(batch: Array<QueryDeepPartialEntity<Customer>>) {
     if (!batch.length) return;
 
     // 3.1) Spalten ermitteln, die bei Konflikt überschrieben werden sollen

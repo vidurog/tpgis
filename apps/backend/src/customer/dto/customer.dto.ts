@@ -81,12 +81,6 @@ export type CustomerDTO = {
    */
   geom: { lon: number; lat: number } | null;
 
-  /** Flag: Datensatz hat (noch) Datenfehler. */
-  datenfehler: boolean;
-
-  /** Begründung/Erklärung der Datenfehler. */
-  begruendung_datenfehler: string | null;
-
   /** Flag: Datensatz ist aktiv. */
   aktiv: boolean;
 
