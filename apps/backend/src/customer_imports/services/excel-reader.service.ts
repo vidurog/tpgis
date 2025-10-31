@@ -79,12 +79,4 @@ export class ExcelReaderService {
       }
     }
   }
-
-  /**
-   * Hook für Ressourcenfreigabe (derzeit ohne Inhalt).
-   * @param filePath Pfad zur XLSX-Datei
-   */
-  async close(filePath: string): Promise<void> {
-    // optional
-  }
 }

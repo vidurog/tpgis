@@ -60,6 +60,7 @@ export default function ExcelUpload({
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null);
     setUpdateSuccess(null);
+    setMergeSuccess(null);
     const f = e.target.files?.[0] ?? null;
     if (!f) {
       setFile(null);
@@ -115,14 +116,17 @@ export default function ExcelUpload({
       setMerging(true);
       const mergeRes = await mergeExcelFile(import_id);
       const duplicates = mergeRes.duplicates;
-      const noUpsert = mergeRes.inserted === 0 && mergeRes.updated === 0;
+      const noUpsert =
+        mergeRes.inserted === 0 &&
+        mergeRes.updated === 0 &&
+        mergeRes.deleted === 0;
 
       duplicates ? setDuplicates(duplicates) : setDuplicates(null);
 
       noUpsert
         ? setMergeSuccess("Merge erfolgreich. Keine neuen Daten.")
         : setMergeSuccess(
-            `Merge erfolgreich. (inserted: ${mergeRes.inserted}, updated: ${mergeRes.updated})`
+            `Merge erfolgreich. (inserted: ${mergeRes.inserted}, updated: ${mergeRes.updated}, deleted: ${mergeRes.deleted})`
           );
 
       setMerging(false);
@@ -153,7 +157,7 @@ export default function ExcelUpload({
         accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         onChange={handleChange}
         className="xl__input"
-        disabled={loading}
+        disabled={loading || merging}
       />
 
       {file && (
@@ -161,7 +165,7 @@ export default function ExcelUpload({
           <span className="xl__name" title={file.name}>
             {file.name}
           </span>
-          <Button variant="ghost" onClick={reset} disabled={loading}>
+          <Button variant="ghost" onClick={reset} disabled={loading || merging}>
             Entfernen
           </Button>
         </div>
@@ -170,7 +174,7 @@ export default function ExcelUpload({
       {error && <div className="xl__error">{error}</div>}
       {updateSuccess && <div className="xl__success">{updateSuccess}</div>}
       {mergeSuccess && <div className="xl__success">{mergeSuccess}</div>}
-      {/* ⚠️ Warnbox für Duplikate */}
+      {/* Warnbox für Duplikate */}
       {duplicates && duplicates.length > 0 && (
         <div className="xl__warn">
           <div className="xl__warn-title">
@@ -188,12 +192,26 @@ export default function ExcelUpload({
           </div>
         </div>
       )}
-
-      <div className="xl__actions">
-        <Button onClick={handleSubmit} disabled={!file || loading || merging}>
-          {loading ? "Lade hoch..." : merging ? "Merge Daten..." : "Hochladen"}
-        </Button>
-      </div>
+      {/* Ladeanzeige oder Hochladen Button */}
+      {loading || merging ? (
+        <div
+          className="xl__loading"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <span className="xl__spinner" aria-hidden="true"></span>
+          <span className="xl__loadingText">
+            {loading ? "Lade hoch..." : "Merge Daten..."}
+          </span>
+        </div>
+      ) : (
+        <div className="xl__actions">
+          <Button onClick={handleSubmit} disabled={!file || loading || merging}>
+            Hochladen
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

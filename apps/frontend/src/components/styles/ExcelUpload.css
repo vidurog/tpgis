@@ -54,3 +54,30 @@
   border-radius: 8px;
   padding: 8px;
 }
+
+.xl__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.xl__loadingText {
+  color: #334155;
+  font-weight: 500;
+}
+
+/* “schließender Kreis” – ein rotierender Ring-Ausschnitt */
+.xl__spinner {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  border-radius: 50%;
+  border: 3px solid #e5e7eb;            /* heller Kreis */
+  border-top-color: #0ea5e9;             /* farbiger Abschnitt */
+  animation: xl-spin .75s linear infinite;
+}
+
+@keyframes xl-spin {
+  to { transform: rotate(360deg); }
+}

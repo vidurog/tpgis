@@ -82,6 +82,7 @@ export class CustomerMergeService {
 
     let inserted: number = 0;
     let updated: number = 0;
+    let deleted: number = 0;
     let duplicates: string[] = [];
     let batch: Array<QueryDeepPartialEntity<Customer>> = [];
 
@@ -100,7 +101,8 @@ export class CustomerMergeService {
     // nicht vorhandene Kunden aktiv = false markieren
     const deactivate = async () => {
       if (!seen.size) return;
-      await this.customerWriter.deactivate(seen);
+      deleted += await this.customerWriter.deactivate(seen);
+      console.log('Deleted:', deleted);
     };
 
     // 1) Zeilen aus kunden_import laden
@@ -164,6 +166,7 @@ export class CustomerMergeService {
       // Kundennummer
       customer.kundennummer = this.normService.createKundennummer(
         customer.nachname,
+        customer.vorname,
         customer.geburtstag ?? null,
       );
 
@@ -255,6 +258,7 @@ export class CustomerMergeService {
       import_id,
       inserted,
       updated,
+      deleted,
       total: inserted + updated,
       duplicates,
     };
