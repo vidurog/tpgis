@@ -26,7 +26,6 @@ export class CustomerWriterService {
    * @returns Query-Ergebnis (u. a. mit `raw` samt `xmax`)
    */
   async bulkInsert(batch: Array<QueryDeepPartialEntity<Customer>>) {
-    const knr_debug: Record<string, number> = {};
     if (!batch.length) return;
 
     // 3.1) Spalten ermitteln, die bei Konflikt überschrieben werden sollen
@@ -63,15 +62,23 @@ export class CustomerWriterService {
    */
   async deactivate(seen: Set<string>) {
     const ids = [...seen];
+    if (ids.length === 0) {
+      return 0;
+    }
+    const result = await this.customerRepo
+      .createQueryBuilder()
+      .update('kunden')
+      .set({ aktiv: false })
+      .where('(kundennummer IS NULL OR NOT (kundennummer = ANY(:ids)))', {
+        ids,
+      })
+      .andWhere('aktiv IS DISTINCT FROM false')
+      .returning('kundennummer')
+      .execute();
 
-    await this.customerRepo.query(
-      `
-        UPDATE kunden k
-          SET aktiv = false
-        WHERE (k.kundennummer IS NULL OR NOT (k.kundennummer = ANY($1::text[])))
-          AND k.aktiv IS DISTINCT FROM false;
-        `,
-      [ids],
+    return (
+      (result.affected ?? (Array.isArray(result.raw) ? result.raw.length : 0)) |
+      0
     );
   }
 }

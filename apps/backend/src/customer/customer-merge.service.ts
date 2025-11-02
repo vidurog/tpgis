@@ -82,6 +82,8 @@ export class CustomerMergeService {
 
     let inserted: number = 0;
     let updated: number = 0;
+    let deleted: number = 0;
+    let duplicates: string[] = [];
     let batch: Array<QueryDeepPartialEntity<Customer>> = [];
 
     // Batch über WriterService in CB schreiben
@@ -99,7 +101,8 @@ export class CustomerMergeService {
     // nicht vorhandene Kunden aktiv = false markieren
     const deactivate = async () => {
       if (!seen.size) return;
-      await this.customerWriter.deactivate(seen);
+      deleted += await this.customerWriter.deactivate(seen);
+      console.log('Deleted:', deleted);
     };
 
     // 1) Zeilen aus kunden_import laden
@@ -153,17 +156,19 @@ export class CustomerMergeService {
         this.normService.normalizeStrasse(customer.strasse!);
       customer.telefon = this.normService.normalizeToE164(customer.telefon);
       customer.mobil = this.normService.normalizeToE164(customer.mobil);
-      customer.kennung = this.normService.normalizeKennung(customer.kennung);
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
-      customer.kundennummer = this.normService.createKundennummer(
-        customer.vorname,
-        customer.nachname,
-        customer.strasse,
-        customer.hnr,
+      customer.kennung = this.normService.normalizeKennung(customer.kennung);
+      customer.besuchrhythmus = this.normService.normalizeBesuchrhythmus(
+        customer.besuchrhythmus,
       );
 
-      // customer.besuchrhythmus = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad2; // DEBUG
+      // Kundennummer
+      customer.kundennummer = this.normService.createKundennummer(
+        customer.nachname,
+        customer.vorname,
+        customer.geburtstag ?? null,
+      );
 
       // ------------------- DB Gebäudematch -------------------
       // T0: Exakt auf (Ort/Kreis, Straße normiert, Hausnummer numerisch, Suffix)
@@ -223,6 +228,13 @@ export class CustomerMergeService {
           `ST_SetSRID(ST_MakePoint(${point.lon}, ${point.lat}),4326)`;
       }
 
+      // 2.4) Duplikate filtern. Match first.
+      if (seen.has(customer.kundennummer)) {
+        duplicates.push(customer.vorname, customer.nachname);
+        console.log('Merge duplicates:', duplicates); // DEBUG
+        continue;
+      }
+
       // 2.4) In Batch übernehmen
       batch.push(values as QueryDeepPartialEntity<Customer>);
 
@@ -242,6 +254,13 @@ export class CustomerMergeService {
     // 5) ImportRun merged = true
     this.runService.mergeImport(import_id);
 
-    return { import_id, inserted, updated, total: inserted + updated };
+    return {
+      import_id,
+      inserted,
+      updated,
+      deleted,
+      total: inserted + updated,
+      duplicates,
+    };
   }
 }

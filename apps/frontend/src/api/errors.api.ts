@@ -206,6 +206,8 @@ export async function listErrors(params?: {
     },
   };
 
+  console.log("Error API. stats:", errorStats);
+
   return {
     total: Number(payload.total ?? rows.length),
     limit: Number(payload.limit ?? limit),

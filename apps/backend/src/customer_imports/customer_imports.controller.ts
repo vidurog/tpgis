@@ -179,6 +179,10 @@ export class CustomerImportsController {
             inserted: { type: 'integer', example: 10 },
             updated: { type: 'integer', example: 2 },
             total: { type: 'integer', example: 12 },
+            duplicates: {
+              type: 'array',
+              example: ['Max, Mustermann', 'Sabine Musterfrau'],
+            },
           },
           required: ['import_id', 'inserted', 'updated', 'total'],
         },

@@ -197,37 +197,41 @@ export class CustomerNormalization {
     else if (kennung.includes('2')) return 'Pflegegrad 2';
     else if (kennung.includes('3')) return 'Pflegegrad 3';
     else if (kennung.includes('4')) return 'Pflegegrad 4';
+    else if (kennung.includes('5')) return 'Pflegegrad 5';
     else return 'Kein Pflegegrad';
   }
 
+  normalizeBesuchrhythmus(besuchrhythmus: string | null) {
+    if (!besuchrhythmus) return null;
+    if (besuchrhythmus.includes('6') || besuchrhythmus.includes('halb')) {
+      return '6 Monate';
+    }
+    if (besuchrhythmus.includes('3') || besuchrhythmus.includes('viertel'))
+      return '3 Monate';
+    else return null;
+  }
+
   /**
-   * Erzeugt eine einfache **Kundennummer** aus Vorname/Name/Straße (+ optional Hausnummer).
+   * Erzeugt eine einfache **Kundennummer** aus Nachname und Geburtsdatum.
    *
-   * @param vorname Vorname
-   * @param name Nachname
-   * @param strasse Straße
-   * @param hnr Hausnummer oder `null`
-   * @returns generierte Kundennummer (z. B. `"MAXMUSMUS12"`)
-   *
-   * @remarks
-   * - Verwendet je 3 Zeichen von Vorname/Name/Straße (Uppercase).
-   * - Hängt die Hausnummer an, ansonsten `"000"`.
-   * - **Hinweis**: `replace(' ', '')` entfernt nur das **erste** Leerzeichen.
-   *   Für eine aggressive Entfernung aller Leerzeichen wäre ein RegExp nötig.
+   * @param nachname Nachname
+   * @param geburtstag Geburtstdatum
+   * @returns generierte Kundennummer (z. B. `"MUST1994"`)
    */
   createKundennummer(
+    nachname: string,
     vorname: string,
-    name: string,
-    strasse: string,
-    hnr: string | null,
+    geburtstag: Date | null,
   ): string {
-    const kundennummer =
-      vorname.slice(0, 3).toUpperCase() +
-      name.slice(0, 3).toUpperCase() +
-      strasse.slice(0, 3).toUpperCase();
-    return hnr
-      ? (kundennummer + hnr).replace(' ', '')
-      : (kundennummer + '000').replace(' ', '');
+    if (geburtstag) {
+      const day = String(geburtstag.getDate()).padStart(2, '0');
+      const month = String(geburtstag.getMonth() + 1).padStart(2, '0');
+      const year = geburtstag.getFullYear();
+      const kundennummer = `${nachname}${vorname}${day}${month}${year}`;
+      return kundennummer;
+    } else {
+      return nachname + 'XXXX';
+    }
   }
 
   /**
