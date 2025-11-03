@@ -13,7 +13,7 @@ import { CustomerErrorService } from './services/customer-error.service';
 import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 import { ErrorFactory } from 'src/util/ErrorFactory';
-import { CustomerError } from './customer_errorrs.entity';
+import { CustomerError } from './customer_errors.entity';
 import { debug } from 'console';
 
 @Injectable()
@@ -87,18 +87,25 @@ export class CustomerMergeService {
     let deleted: number = 0;
     let duplicates: string[] = [];
     let mergeBatch: Array<QueryDeepPartialEntity<Customer>> = [];
-    let errorBatch: Array<QueryDeepPartialEntity<CustomerError>> = []; // TODO Error Implementation
+    let errorBatch: Array<QueryDeepPartialEntity<CustomerError>> = [];
 
     // Batch über WriterService in DB schreiben
     const flush = async () => {
+      // Merge Data
       if (!mergeBatch.length) return;
-      const res = await this.customerWriter.bulkMerge(mergeBatch);
+      const res = await this.customerWriter.bulkUpsertMergeBatch(mergeBatch);
       const rowsRet = (res?.raw ?? []) as Array<{ xmax: any }>;
       // PostgreSQL: INSERT → xmax = 0, UPDATE → xmax > 0
       const ins = rowsRet.filter((r) => Number(r.xmax) === 0).length;
       inserted += ins;
       updated += rowsRet.length - ins;
       mergeBatch = [];
+
+      // Error Data
+      if (!errorBatch.length) return;
+      const errorRes =
+        await this.customerWriter.bulkUpsertErrorBatch(errorBatch);
+      errorBatch = [];
     };
 
     // nicht vorhandene Kunden aktiv = false markieren
@@ -211,10 +218,7 @@ export class CustomerMergeService {
       customer.geom = point ?? null;
 
       // ------------------- Validieren (Errors setzen) -------------------
-      const datenfehler: string | null = this.errorService.validate(
-        customer,
-        row.strasse!, // Straße aus Import (nicht normalisiert vom Kunden)
-      );
+      const customerErrors = this.errorService.validate(customer, row.strasse!);
 
       // 2.3) DB-Values bauen
       const values: Record<string, any> = {};
@@ -238,6 +242,7 @@ export class CustomerMergeService {
 
       // 2.4) In Batch übernehmen
       mergeBatch.push(values as QueryDeepPartialEntity<Customer>);
+      errorBatch.push(customerErrors);
 
       // 2.5) kundennummer → seen[]
       seen.add(customer.kundennummer);

@@ -11,7 +11,7 @@ import { HttpModule } from '@nestjs/axios';
 import { CustomerMergeService } from './customer-merge.service';
 import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
-import { CustomerError } from './customer_errorrs.entity';
+import { CustomerError } from './customer_errors.entity';
 
 /**
  * **CustomerModule** bündelt Services & Entity-Konfiguration rund um Kunden:

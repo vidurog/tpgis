@@ -5,8 +5,8 @@ export class CustomerError {
   @PrimaryColumn({ type: 'text', name: 'kundennummer' })
   kundennummer: string;
 
-  @Column({ name: 'import_id', type: 'bigint' })
-  import_id: string;
+  //@Column({ name: 'import_id', type: 'bigint' })
+  ///import_id: string;
 
   @Index()
   @Column({
@@ -19,11 +19,11 @@ export class CustomerError {
 
   @Column({
     type: 'boolean',
-    name: 'geokodierbar',
+    name: 'geom_fehler',
     nullable: false,
     default: false,
   })
-  geokodierbar: boolean;
+  geom_fehler: boolean;
 
   @Column({ type: 'text', name: 'klasse' })
   klasse: string;
@@ -38,14 +38,19 @@ export class CustomerError {
 
   @Column({
     type: 'boolean',
-    name: 'rhythmus',
+    name: 'rhythmus_fehler',
     nullable: false,
     default: false,
   })
-  rhythmus: boolean;
+  rhythmus_fehler: boolean;
 
-  @Column({ type: 'boolean', name: 'kennung', nullable: false, default: false })
-  kennung: boolean;
+  @Column({
+    type: 'boolean',
+    name: 'kennung_fehler',
+    nullable: false,
+    default: false,
+  })
+  kennung_fehler: boolean;
 
   @Column({
     type: 'boolean',
@@ -57,26 +62,33 @@ export class CustomerError {
 
   @Column({
     type: 'boolean',
-    name: 'historik',
+    name: 'historik_fehler',
     nullable: false,
     default: false,
   })
-  historik: boolean;
-
-  @Column({ type: 'boolean', name: 'kontakt', nullable: false, default: false })
-  kontakt: boolean;
+  historik_fehler: boolean;
 
   @Column({
     type: 'boolean',
-    name: 'geburtstag',
+    name: 'kontakt_fehler',
     nullable: false,
     default: false,
   })
-  geburtstag: boolean;
+  kontakt_fehler: boolean;
+
+  @Column({
+    type: 'boolean',
+    name: 'geburtstag_fehler',
+    nullable: false,
+    default: false,
+  })
+  geburtstag_fehler: boolean;
 
   @Column({
     type: 'text',
     name: 'adresse_neu',
+    nullable: true,
+    default: null,
   })
-  addresse_neu: string;
+  adresse_neu: string | null;
 }

@@ -1,14 +1,15 @@
 export type CustomerErrorDTO = {
   kundennummer: string;
-  import_id: string;
+  //import_id: string;
   datenfehler: boolean;
-  geokodierbar: boolean;
+  geom_fehler: boolean;
   klasse: string;
   fehleranzahl: number;
-  rhythmus: boolean;
+  rhythmus_fehler: boolean;
+  kennung_fehler: boolean;
   inkonsistenz: boolean;
-  historik: boolean;
-  kontakt: boolean;
-  geburtstag: boolean;
-  adresse_neu: string;
+  historik_fehler: boolean;
+  kontakt_fehler: boolean;
+  geburtstag_fehler: boolean;
+  adresse_neu: string | null;
 };

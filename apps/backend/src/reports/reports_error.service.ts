@@ -17,54 +17,6 @@ export class ReportsErrorService {
     private readonly kundenRepo: Repository<Customer>,
   ) {}
 
-  // ---------------------------------------------------------------------------
-  // Zentral definierte SQL-Ausdrücke (als Strings), die wir mehrfach wiederverwenden.
-  // Vorteil: konsistente Berechnung und ein Ort zum Ändern/Erweitern.
-  // Hinweis: Diese Ausdrücke werden via `addSelect(expr, alias)` als virtuelle
-  // Spalten in die Query gehängt.
-  // ---------------------------------------------------------------------------
-  private readonly EXPR = {
-    geocodable: `(k.geom IS NOT NULL OR k.gebref_oid IS NOT NULL)`,
-    err_missing_rhythmus: `(k.besuchrhythmus IS NULL)`,
-    err_missing_kennung: `(k.kennung IS NULL)`,
-    err_inconsistent_kennung_rhythmus: `
-      (COALESCE(k.begruendung_datenfehler,'') ILIKE '%Inkonsistent%')
-    `,
-    err_missing_history: `(k.qs_besuch_historik IS NULL)`,
-    err_missing_contact: `(k.telefon IS NULL AND k.mobil IS NULL)`,
-    err_no_geocoding: `(k.geom IS NULL)`,
-    // Suche „Adresse geändert“ in der Begründung (bewusst Originalschreibweise „Addresse“)
-    err_address_changed: `
-      (COALESCE(k.begruendung_datenfehler,'') ILIKE '%Addresse geändert%')
-    `,
-  };
-
-  // Klassifizierung von Adressproblemen:
-  // - ADDRESS_GEOCODABLE: Adresse hat Problem, ist aber prinzipiell geokodierbar (geom/gebref_oid vorhanden)
-  // - ADDRESS_NOT_GEOCODABLE: Problem und NICHT geokodierbar
-  // - NO_ADDRESS_ISSUE: kein Adressthema
-  private readonly EXPR_ERROR_CLASS = `
-    CASE
-      WHEN ( ${this.EXPR.err_address_changed} OR ${this.EXPR.err_no_geocoding} ) THEN
-        CASE WHEN ${this.EXPR.geocodable}
-             THEN 'ADDRESS_GEOCODABLE'
-             ELSE 'ADDRESS_NOT_GEOCODABLE'
-        END
-      ELSE 'NO_ADDRESS_ISSUE'
-    END
-  `;
-
-  // Zähle alle eingeschalteten Fehlerflags zu einer Gesamtzahl zusammen.
-  private readonly EXPR_ERROR_COUNT = `
-    (CASE WHEN ${this.EXPR.err_missing_rhythmus} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_missing_kennung} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_inconsistent_kennung_rhythmus} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_missing_history} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_missing_contact} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_no_geocoding} THEN 1 ELSE 0 END) +
-    (CASE WHEN ${this.EXPR.err_address_changed} THEN 1 ELSE 0 END)
-  `;
-
   // Whitelist für sortierbare Felder (verhindert SQL-Injection durch freie Sort-Keys).
   private readonly SORT_MAP: Record<errorSortable, string> = {
     kundennummer: 'k.kundennummer',
@@ -73,17 +25,24 @@ export class ReportsErrorService {
     strasse: 'k.strasse',
     plz: 'k.plz',
     ort: 'k.ort',
-    datenfehler: 'k.datenfehler',
-    err_missing_rhythmus: 'err_missing_rhythmus',
-    err_missing_kennung: 'err_missing_kennung',
-    err_inconsistent_kennung_rhythmus: 'err_inconsistent_kennung_rhythmus',
-    err_missing_history: 'err_missing_history',
-    err_missing_contact: 'err_missing_contact',
-    err_no_geocoding: 'err_no_geocoding',
-    err_address_changed: 'err_address_changed',
-    geocodable: 'geocodable',
-    error_class: 'error_class',
-    error_count: 'error_count',
+    aktiv: 'k.aktiv',
+
+    // persistiert
+    datenfehler: 'kf.datenfehler',
+    error_class: 'kf.klasse',
+    error_count: 'kf.fehleranzahl',
+
+    // Einzel-Flags
+    err_missing_rhythmus: 'kf.rhythmus_fehler',
+    err_missing_kennung: 'kf.kennung_fehler',
+    err_inconsistent_kennung_rhythmus: 'kf.inkonsistenz',
+    err_missing_history: 'kf.historik_fehler',
+    err_missing_contact: 'kf.kontakt_fehler',
+    err_no_geocoding: 'kf.geom_fehler',
+    err_address_changed: '(kf.adresse_neu IS NOT NULL)',
+
+    // Kompatibel
+    geocodable: '(NOT kf.geom_fehler)',
   };
 
   // ---------------------------------------------------------------------------
@@ -92,20 +51,20 @@ export class ReportsErrorService {
   private buildBaseQuery(): SelectQueryBuilder<Customer> {
     return this.kundenRepo
       .createQueryBuilder('k')
-      .where('k.aktiv = true')
-      .addSelect(this.EXPR.geocodable, 'geocodable')
-      .addSelect(this.EXPR.err_missing_rhythmus, 'err_missing_rhythmus')
-      .addSelect(this.EXPR.err_missing_kennung, 'err_missing_kennung')
-      .addSelect(
-        this.EXPR.err_inconsistent_kennung_rhythmus,
-        'err_inconsistent_kennung_rhythmus',
-      )
-      .addSelect(this.EXPR.err_missing_history, 'err_missing_history')
-      .addSelect(this.EXPR.err_missing_contact, 'err_missing_contact')
-      .addSelect(this.EXPR.err_no_geocoding, 'err_no_geocoding')
-      .addSelect(this.EXPR.err_address_changed, 'err_address_changed')
-      .addSelect(this.EXPR_ERROR_CLASS, 'error_class')
-      .addSelect(this.EXPR_ERROR_COUNT, 'error_count');
+      .leftJoin('kunden_fehler', 'kf', 'kf.kundennummer = k.kundennummer')
+      .addSelect('kf.datenfehler', 'datenfehler')
+      .addSelect('kf.klasse', 'error_class')
+      .addSelect('kf.fehleranzahl', 'error_count')
+      .addSelect('kf.rhythmus_fehler', 'rhythmus_fehler')
+      .addSelect('kf.kennung_fehler', 'kennung_fehler')
+      .addSelect('kf.inkonsistenz', 'inkonsistenz')
+      .addSelect('kf.historik_fehler', 'historik_fehler')
+      .addSelect('kf.kontakt_fehler', 'kontakt_fehler')
+      .addSelect('kf.geburtstag_fehler', 'geburtstag_fehler')
+      .addSelect('kf.geom_fehler', 'geom_fehler')
+      .addSelect('kf.adresse_neu', 'adresse_neu')
+      .addSelect('(NOT kf.geom_fehler)', 'geocodable')
+      .addSelect('kf.geom_fehler', 'err_no_geocoding');
   }
 
   // ---------------------------------------------------------------------------
@@ -115,10 +74,17 @@ export class ReportsErrorService {
     qb: SelectQueryBuilder<Customer>,
     dto: ReportsErrorsQueryDto,
   ) {
+    // Standard: nur aktive, außer aktiv explizit gesetzt wurde
+    if (dto.aktiv === undefined) {
+      qb.andWhere('k.aktiv = true');
+    } else {
+      qb.andWhere('k.aktiv = :aktiv', { aktiv: dto.aktiv });
+    }
+
     if (dto.plz) qb.andWhere('k.plz = :plz', { plz: dto.plz });
     if (dto.ort) qb.andWhere('k.ort ILIKE :ort', { ort: `%${dto.ort}%` });
     if (dto.datenfehler !== undefined)
-      qb.andWhere('k.datenfehler = :df', { df: dto.datenfehler });
+      qb.andWhere('kf.datenfehler = :df', { df: dto.datenfehler });
 
     if (dto.kundennummer) {
       qb.andWhere('k.kundennummer ILIKE :knr', {
@@ -132,7 +98,6 @@ export class ReportsErrorService {
       });
     }
 
-    // Hilfsfunktion für boolsche Filter (TRUE/FALSE) auf berechneten Ausdrücken.
     const boolFilter = <T extends keyof ReportsErrorsQueryDto>(
       field: T,
       expr: string,
@@ -142,28 +107,21 @@ export class ReportsErrorService {
         qb.andWhere(`${expr} = :${String(field)}`, { [String(field)]: v });
     };
 
-    boolFilter('geocodable', this.EXPR.geocodable);
-    boolFilter('err_missing_rhythmus', this.EXPR.err_missing_rhythmus);
-    boolFilter('err_missing_kennung', this.EXPR.err_missing_kennung);
-    boolFilter(
-      'err_inconsistent_kennung_rhythmus',
-      this.EXPR.err_inconsistent_kennung_rhythmus,
-    );
-    boolFilter('err_missing_history', this.EXPR.err_missing_history);
-    boolFilter('err_missing_contact', this.EXPR.err_missing_contact);
-    boolFilter('err_no_geocoding', this.EXPR.err_no_geocoding);
-    boolFilter('err_address_changed', this.EXPR.err_address_changed);
+    // Kompatible alte Query-Flags → kf Felder
+    boolFilter('geocodable', '(NOT kf.geom_fehler)');
+    boolFilter('err_missing_rhythmus', 'kf.rhythmus_fehler');
+    boolFilter('err_missing_kennung', 'kf.kennung_fehler');
+    boolFilter('err_inconsistent_kennung_rhythmus', 'kf.inkonsistenz');
+    boolFilter('err_missing_history', 'kf.historik_fehler');
+    boolFilter('err_missing_contact', 'kf.kontakt_fehler');
+    boolFilter('err_no_geocoding', 'kf.geom_fehler');
+    boolFilter('err_address_changed', '(kf.adresse_neu IS NOT NULL)');
 
-    // Klassen-Filter: leitet sich aus mehreren Flags ab (siehe EXPR_ERROR_CLASS).
+    // Klassen-Filter exakt/CI
     if (dto.error_class) {
-      const addressIssue = `(${this.EXPR.err_address_changed} OR ${this.EXPR.err_no_geocoding})`;
-      if (dto.error_class === 'NO_ADDRESS_ISSUE') {
-        qb.andWhere(`NOT ${addressIssue}`);
-      } else if (dto.error_class === 'ADDRESS_GEOCODABLE') {
-        qb.andWhere(`${addressIssue} AND ${this.EXPR.geocodable} = TRUE`);
-      } else if (dto.error_class === 'ADDRESS_NOT_GEOCODABLE') {
-        qb.andWhere(`${addressIssue} AND ${this.EXPR.geocodable} = FALSE`);
-      }
+      qb.andWhere("kf.klasse ILIKE :klass ESCAPE '\\'", {
+        klass: dto.error_class.replace(/_/g, '\\_'),
+      });
     }
   }
 
@@ -177,25 +135,28 @@ export class ReportsErrorService {
     const total = await totalQb.getCount();
 
     // Fehleranzahl. Gesamt + Kategorie als stats
-    const statsQb = this.buildBaseQuery();
-    this.applyFilters(statsQb, dto);
-    // keine Sortierung/Pagination
+    const statsQb = this.kundenRepo
+      .createQueryBuilder('k')
+      .leftJoin('kunden_fehler', 'kf', 'kf.kundennummer = k.kundennummer');
+
+    this.applyFilters(statsQb as any, dto);
+
     statsQb.select([]);
     statsQb.addSelect('COUNT(*)', 'total_filtered');
     statsQb.addSelect(
-      `SUM(CASE WHEN k.datenfehler = TRUE THEN 1 ELSE 0 END)`,
+      `SUM(CASE WHEN kf.datenfehler = TRUE THEN 1 ELSE 0 END)`,
       'datenfehler_count',
     );
     statsQb.addSelect(
-      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'NO_ADDRESS_ISSUE' THEN 1 ELSE 0 END)`,
+      `SUM(CASE WHEN kf.klasse = 'NO_ADDRESS_ISSUE' THEN 1 ELSE 0 END)`,
       'cnt_no_address_issue',
     );
     statsQb.addSelect(
-      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'ADDRESS_GEOCODABLE' THEN 1 ELSE 0 END)`,
+      `SUM(CASE WHEN kf.klasse = 'ADDRESS_GEOCODABLE' THEN 1 ELSE 0 END)`,
       'cnt_address_geocodable',
     );
     statsQb.addSelect(
-      `SUM(CASE WHEN ${this.EXPR_ERROR_CLASS} = 'ADDRESS_NOT_GEOCODABLE' THEN 1 ELSE 0 END)`,
+      `SUM(CASE WHEN kf.klasse = 'ADDRESS_NOT_GEOCODABLE' THEN 1 ELSE 0 END)`,
       'cnt_address_not_geocodable',
     );
     const statsRaw = await statsQb.getRawOne<{
@@ -321,6 +282,7 @@ export class ReportsErrorService {
   // - boolean/number-Strings werden in echte `boolean`/`number` konvertiert.
   // ---------------------------------------------------------------------------
   private mapRow = (r: any) => ({
+    // Customer-Basis
     kundennummer: r.k_kundennummer,
     nachname: r.k_nachname,
     vorname: r.k_vorname,
@@ -344,22 +306,30 @@ export class ReportsErrorService {
     qs_besuch_hinweis_1: r.k_qs_besuch_hinweis_1,
     qs_besuch_hinweis_2: r.k_qs_besuch_hinweis_2,
     geom: r.k_geom,
-    datenfehler: r.k_datenfehler,
-    begruendung_datenfehler: r.k_begruendung_datenfehler,
     aktiv: r.k_aktiv,
     gebref_oid: r.k_gebref_oid,
+    sgb_37_3: r.k_sgb_37_3,
+    pflegefirma: r.k_pflegefirma,
 
-    // berechnet
-    geocodable: !!r.geocodable,
-    error_class: r.error_class,
-    error_count: Number(r.error_count),
+    // Persistierte Fehlerfelder
+    datenfehler: !!r.datenfehler,
+    error_class: r.error_class ?? 'NO_ADDRESS_ISSUE',
+    error_count: Number(r.error_count ?? 0),
 
-    err_missing_rhythmus: !!r.err_missing_rhythmus,
-    err_missing_kennung: !!r.err_missing_kennung,
-    err_inconsistent_kennung_rhythmus: !!r.err_inconsistent_kennung_rhythmus,
-    err_missing_history: !!r.err_missing_history,
-    err_missing_contact: !!r.err_missing_contact,
-    err_no_geocoding: !!r.err_no_geocoding,
+    rhythmus_fehler: !!r.rhythmus_fehler,
+    kennung_fehler: !!r.kennung_fehler,
+    inkonsistenz: !!r.inkonsistenz,
+    historik_fehler: !!r.historik_fehler,
+    kontakt_fehler: !!r.kontakt_fehler,
+    geburtstag_fehler: !!r.geburtstag_fehler,
+
+    // Geo/Kompatibilität
+    geom_fehler: !!r.geom_fehler,
+    geocodable: !!r.geocodable, // = NOT geom_fehler
+    err_no_geocoding: !!r.err_no_geocoding, // alias alt
+
+    // Adresse
+    adresse_neu: r.adresse_neu ?? null,
     err_address_changed: !!r.err_address_changed,
   });
 }

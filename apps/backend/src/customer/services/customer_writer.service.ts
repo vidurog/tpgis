@@ -4,12 +4,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Customer } from '../customer.entity';
 import { Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
+import { CustomerError } from '../customer_errors.entity';
 
 @Injectable()
 export class CustomerWriterService {
   constructor(
     @InjectRepository(Customer)
     private readonly customerRepo: Repository<Customer>,
+    @InjectRepository(CustomerError)
+    private readonly errorRepo: Repository<CustomerError>,
   ) {}
 
   /**
@@ -25,7 +28,7 @@ export class CustomerWriterService {
    * @param batch Liste teilweiser Datensätze (upsert-fähig)
    * @returns Query-Ergebnis (u. a. mit `raw` samt `xmax`)
    */
-  async bulkMerge(batch: Array<QueryDeepPartialEntity<Customer>>) {
+  async bulkUpsertMergeBatch(batch: Array<QueryDeepPartialEntity<Customer>>) {
     if (!batch.length) return;
 
     // 3.1) Spalten ermitteln, die bei Konflikt überschrieben werden sollen
@@ -80,5 +83,31 @@ export class CustomerWriterService {
       (result.affected ?? (Array.isArray(result.raw) ? result.raw.length : 0)) |
       0
     );
+  }
+
+  async bulkUpsertErrorBatch(
+    batch: Array<QueryDeepPartialEntity<CustomerError>>,
+  ) {
+    if (!batch.length) return;
+
+    // 3.1) Spalten ermitteln, die bei Konflikt überschrieben werden sollen
+    const allCols = new Set<string>();
+    for (const v of batch) {
+      Object.keys(v as object).forEach((c) => allCols.add(c));
+    }
+    const overwrite = [...allCols].filter((c) => c !== 'kundennummer');
+
+    // 3.2) Upsert-Statement (INSERT .. ON CONFLICT (kundennummer) DO UPDATE)
+    const res = await this.customerRepo
+      .createQueryBuilder()
+      .insert()
+      .into(CustomerError)
+      .values(batch)
+      .orUpdate(overwrite, ['kundennummer'], {
+        skipUpdateIfNoValuesChanged: true,
+      })
+      .execute();
+
+    console.log('ErrorBatch', res); // DEBUG
   }
 }

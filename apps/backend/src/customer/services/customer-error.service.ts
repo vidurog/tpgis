@@ -1,10 +1,7 @@
 // src/customer/services/customer-validation.service.ts
 import { Injectable } from '@nestjs/common';
 import { CustomerDTO } from '../dto/customer.dto';
-import { CUSTOMER_BESUCHRHYTHMUS } from '../dto/customer.besuchrhythmus';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CustomerError } from '../customer_errorrs.entity';
+import { CustomerErrorDTO } from '../dto/customer_error.dto';
 
 @Injectable()
 export class CustomerErrorService {
@@ -28,48 +25,80 @@ export class CustomerErrorService {
    * (Orthografie: „Adresse“ wäre mit einem „d“ – hier **keine** Codeänderung vorgenommen.)
    */
 
-  constructor(
-    @InjectRepository(CustomerError)
-    private readonly customerRepo: Repository<CustomerError>,
-  ) {}
-
-  validate(customer: CustomerDTO, rawStrasse: string): string | null {
+  validate(customer: CustomerDTO, rawStrasse: string): CustomerErrorDTO {
     // Mapping: Kennung → erwarteter Besuchsrhythmus
     const kennung_rhythmus: Record<string, string> = {};
-    kennung_rhythmus['Pflegegrad 1'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
-    kennung_rhythmus['Pflegegrad 2'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
-    kennung_rhythmus['Pflegegrad 3'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad123;
-    kennung_rhythmus['Pflegegrad 4'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad45;
-    kennung_rhythmus['Pflegegrad 5'] = CUSTOMER_BESUCHRHYTHMUS.Pflegegrad45;
+    kennung_rhythmus['Pflegegrad 1'] = '6';
+    kennung_rhythmus['Pflegegrad 2'] = '6';
+    kennung_rhythmus['Pflegegrad 3'] = '6';
+    kennung_rhythmus['Pflegegrad 4'] = '3';
+    kennung_rhythmus['Pflegegrad 5'] = '3';
 
-    let errors: string[] = [];
+    let errorCount = 0;
 
-    // Value Null errors
-    if (!customer.besuchrhythmus) errors.push('Kein Besuchrhythmus');
-    if (!customer.kennung) errors.push('Keine Kennung');
-    if (!customer.qs_besuch_historik) errors.push('Keine Historik');
-    if (!customer.geom) errors.push('Keine Geokodierung');
-    if (!customer.geburtstag) errors.push('Kein Geburtstag');
+    let customerError: CustomerErrorDTO = {
+      kundennummer: customer.kundennummer,
+      datenfehler: false,
+      geom_fehler: false,
+      klasse: 'NO_ADDRESS_ISSUE',
+      fehleranzahl: 0,
+      rhythmus_fehler: false,
+      kennung_fehler: false,
+      inkonsistenz: false,
+      historik_fehler: false,
+      kontakt_fehler: false,
+      geburtstag_fehler: false,
+      adresse_neu: null,
+    };
+
+    // Value null errors
+    if (!customer.geom) {
+      customerError.geom_fehler = true;
+      errorCount++;
+      customerError.datenfehler = true;
+    }
+    if (customer.besuchrhythmus?.includes('*'))
+      customerError.rhythmus_fehler = true;
+    if (customer.kennung?.includes('*')) customerError.kennung_fehler = true;
+    if (!customer.qs_besuch_historik) customerError.historik_fehler = true;
     if (!customer.telefon && !customer.mobil)
-      errors.push('Keine Telefon/Mobil Nummer');
+      customerError.kontakt_fehler = true;
+    if (!customer.geburtstag) {
+      customerError.geburtstag_fehler = true;
+      customerError.datenfehler = true;
+    }
 
+    // Inkonsistenz Kennung/Rhythymus
     if (
       customer.besuchrhythmus &&
       customer.kennung &&
-      kennung_rhythmus[customer.kennung!] !== customer.besuchrhythmus
+      !customer.besuchrhythmus.includes(kennung_rhythmus[customer.kennung])
     ) {
-      errors.push('Inkonsistent Kennung/Rhythmus');
+      customerError.inkonsistenz = true;
+      errorCount++;
     }
 
-    // Check ob Straße verändert/normalisiert werden musste
+    // Adresse geändert
     const ganzeStr =
       customer.strasse +
       (customer.hnr ? ' ' + customer.hnr : '') +
       (customer.adz ?? '');
-    if (ganzeStr !== rawStrasse) errors.push('Addresse geändert');
+    if (ganzeStr !== rawStrasse) {
+      customerError.adresse_neu = `${rawStrasse} -> ${ganzeStr}`;
+    }
 
-    // TODO weitere Validierungen
+    // Fehlerklasse
+    // - ADDRESS_GEOCODABLE: Adresse hat Problem, ist aber prinzipiell geokodierbar (geom/gebref_oid vorhanden)
+    // - ADDRESS_NOT_GEOCODABLE: Problem und NICHT geokodierbar
+    // - NO_ADDRESS_ISSUE: kein Adressproblem
+    if (customerError.adresse_neu) {
+      if (customerError.geom_fehler) {
+        customerError.klasse = 'ADDRSS_NOT_GEOCODABLE';
+      } else {
+        customerError.klasse = 'ADDRESS_GEOCODABLE';
+      }
+    }
 
-    return errors.length > 0 ? errors.join(' | ') : null;
+    return customerError;
   }
 }
