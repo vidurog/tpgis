@@ -86,4 +86,8 @@ export type CustomerDTO = {
 
   /** OID/Schlüssel aus der Gebäudereferenz (falls gematcht). */
   gebref_oid: string | null;
+
+  sgb_37_3: boolean;
+
+  pflegefirma: boolean;
 };

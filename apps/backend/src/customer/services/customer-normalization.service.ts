@@ -215,14 +215,53 @@ export class CustomerNormalization {
     kennung: string | null,
     rhythmus: string | null,
   ): [string | null, string | null] {
-    // TODO
+    let norm_rhythmus: string | null;
+    let norm_kennung: string | null;
     if (!kennung && !rhythmus) return [null, null];
+
+    // Besuchrhythmus vorhanden -> Kennung setzen
     if (!kennung) {
-    }
-    if (!rhythmus) {
+      if (rhythmus!.includes('6') || rhythmus!.includes('halb')) {
+        norm_rhythmus = '6 Monate';
+        norm_kennung = `Pflegegrad 2*`;
+      }
+      if (rhythmus!.includes('3') || rhythmus!.includes('viertel')) {
+        norm_rhythmus = '3 Monate';
+        norm_kennung = `Pflegegrad 4*`;
+      } else {
+        norm_rhythmus = null;
+      }
     }
 
-    return ['hallo', 'test'];
+    // Kennung vorhanden
+    if (!rhythmus) {
+      if (kennung!.includes('1')) {
+        kennung = 'Pflegegrad 1';
+        rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('2')) {
+        kennung = 'Pflegegrad 2';
+        rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('3')) {
+        kennung = 'Pflegegrad 3';
+        rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('4')) {
+        kennung = 'Pflegegrad 4';
+        rhythmus = `3 Monate*`;
+      } else if (kennung!.includes('5')) {
+        kennung = 'Pflegegrad 5';
+        rhythmus = `6 Monate*`;
+      }
+    }
+
+    return [kennung, rhythmus];
+  }
+
+  splitAuftraege(auftraege: string | null): [boolean, boolean] {
+    if (!auftraege) return [false, false];
+    const SGB_373 = auftraege.includes('37.3 SGB');
+    const pflegefirma = auftraege.includes('Pflegefirma');
+    // return [37.3 SGB, Pflegefirma]
+    return [SGB_373, pflegefirma];
   }
 
   /**

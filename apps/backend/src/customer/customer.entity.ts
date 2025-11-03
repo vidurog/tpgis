@@ -123,4 +123,10 @@ export class Customer {
   /** OID/Schlüssel aus der Gebäudereferenz, falls gematcht. */
   @Column({ type: 'text', nullable: true })
   gebref_oid: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  sgb_37_3: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  pflegefirma: boolean;
 }

@@ -145,6 +145,8 @@ export class CustomerMergeService {
         geom: null,
         aktiv: true, // Logik TODO
         gebref_oid: null,
+        sgb_37_3: false,
+        pflegefirma: false,
       };
 
       // 2.2) Pipeline
@@ -158,10 +160,15 @@ export class CustomerMergeService {
       customer.mobil = this.normService.normalizeToE164(customer.mobil);
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
+      /* 
+      @Deprecated
+
       customer.kennung = this.normService.normalizeKennung(customer.kennung);
       customer.besuchrhythmus = this.normService.normalizeBesuchrhythmus(
         customer.besuchrhythmus,
       );
+      */
+
       [customer.kennung, customer.besuchrhythmus] =
         this.normService.normalizeKennungRhythmus(
           customer.kennung,
@@ -174,6 +181,11 @@ export class CustomerMergeService {
         customer.vorname,
         customer.geburtstag ?? null,
       );
+
+      // Aufträge splitten
+      // 37.3 SGB und Pflegefirma eigene Flags
+      [customer.sgb_37_3, customer.pflegefirma] =
+        this.normService.splitAuftraege(customer.auftraege);
 
       // ------------------- DB Gebäudematch -------------------
       // T0: Exakt auf (Ort/Kreis, Straße normiert, Hausnummer numerisch, Suffix)
