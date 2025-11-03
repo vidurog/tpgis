@@ -9,7 +9,7 @@ export class splitAuftraege1762166744488 implements MigrationInterface {
         default: false,
       }),
       new TableColumn({
-        name: 'Pflegefirma',
+        name: 'pflegefirma',
         type: 'boolean',
         default: false,
       }),

@@ -49,10 +49,10 @@ CREATE TABLE IF NOT EXISTS kunden (
     qs_besuch_hinweis_1 text,
     qs_besuch_hinweis_2 text,
     geom geometry(Point, 4326),
-    datenfehler boolean NOT NULL DEFAULT false,
-    begruendung_datenfehler text,
     aktiv boolean NOT NULL DEFAULT true,
-    gebref_oid text
+    gebref_oid text,
+    sgb_37_3 boolean NOT NULL DEFAULT false,
+    pflegefirma boolean NOT NULL DEFAULT false
 );
 CREATE TABLE IF NOT EXISTS kunden_import_runs (
     import_id bigint PRIMARY KEY,

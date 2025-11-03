@@ -14,6 +14,7 @@ import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 import { ErrorFactory } from 'src/util/ErrorFactory';
 import { CustomerError } from './customer_errorrs.entity';
+import { debug } from 'console';
 
 @Injectable()
 export class CustomerMergeService {
@@ -160,15 +161,6 @@ export class CustomerMergeService {
       customer.mobil = this.normService.normalizeToE164(customer.mobil);
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
-      /* 
-      @Deprecated
-
-      customer.kennung = this.normService.normalizeKennung(customer.kennung);
-      customer.besuchrhythmus = this.normService.normalizeBesuchrhythmus(
-        customer.besuchrhythmus,
-      );
-      */
-
       [customer.kennung, customer.besuchrhythmus] =
         this.normService.normalizeKennungRhythmus(
           customer.kennung,
@@ -207,7 +199,7 @@ export class CustomerMergeService {
 
       // ------------------- FALLBACK: OGC-API -------------------
       if (!point) {
-        console.log('Fallback', customer.strasse);
+        console.log(`Fallback`, customer.strasse);
         point = await this.geomService.findGeomViaApi(
           customer.strasse,
           customer.hnr!,

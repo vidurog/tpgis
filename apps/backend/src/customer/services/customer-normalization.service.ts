@@ -198,7 +198,7 @@ export class CustomerNormalization {
     else if (kennung.includes('3')) return 'Pflegegrad 3';
     else if (kennung.includes('4')) return 'Pflegegrad 4';
     else if (kennung.includes('5')) return 'Pflegegrad 5';
-    else return 'Kein Pflegegrad';
+    else return null;
   }
 
   normalizeBesuchrhythmus(besuchrhythmus: string | null) {
@@ -215,12 +215,12 @@ export class CustomerNormalization {
     kennung: string | null,
     rhythmus: string | null,
   ): [string | null, string | null] {
-    let norm_rhythmus: string | null;
-    let norm_kennung: string | null;
+    let norm_rhythmus: string | null = this.normalizeBesuchrhythmus(rhythmus);
+    let norm_kennung: string | null = this.normalizeKennung(kennung);
     if (!kennung && !rhythmus) return [null, null];
 
     // Besuchrhythmus vorhanden -> Kennung setzen
-    if (!kennung) {
+    if (!kennung && rhythmus) {
       if (rhythmus!.includes('6') || rhythmus!.includes('halb')) {
         norm_rhythmus = '6 Monate';
         norm_kennung = `Pflegegrad 2*`;
@@ -234,26 +234,30 @@ export class CustomerNormalization {
     }
 
     // Kennung vorhanden
-    if (!rhythmus) {
+    if (!rhythmus && kennung) {
       if (kennung!.includes('1')) {
         kennung = 'Pflegegrad 1';
         rhythmus = `6 Monate*`;
       } else if (kennung!.includes('2')) {
-        kennung = 'Pflegegrad 2';
-        rhythmus = `6 Monate*`;
+        norm_kennung = 'Pflegegrad 2';
+        norm_rhythmus = `6 Monate*`;
       } else if (kennung!.includes('3')) {
-        kennung = 'Pflegegrad 3';
-        rhythmus = `6 Monate*`;
+        norm_kennung = 'Pflegegrad 3';
+        norm_rhythmus = `6 Monate*`;
       } else if (kennung!.includes('4')) {
-        kennung = 'Pflegegrad 4';
-        rhythmus = `3 Monate*`;
+        norm_kennung = 'Pflegegrad 4';
+        norm_rhythmus = `3 Monate*`;
       } else if (kennung!.includes('5')) {
-        kennung = 'Pflegegrad 5';
-        rhythmus = `6 Monate*`;
+        norm_kennung = 'Pflegegrad 5';
+        norm_rhythmus = `6 Monate*`;
       }
     }
 
-    return [kennung, rhythmus];
+    // DEBUG
+    console.log(kennung, rhythmus);
+    console.log(norm_kennung, norm_rhythmus);
+    console.log('');
+    return [norm_kennung, norm_rhythmus];
   }
 
   splitAuftraege(auftraege: string | null): [boolean, boolean] {
