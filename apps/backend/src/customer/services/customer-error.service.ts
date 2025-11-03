@@ -58,7 +58,9 @@ export class CustomerErrorService {
       customerError.datenfehler = true;
     }
     if (customer.besuchrhythmus?.includes('*'))
-      customerError.rhythmus_fehler = true;
+      console.log(customer.besuchrhythmus); // DEBUG
+    console.log(customer.besuchrhythmus?.includes('*'));
+    customerError.rhythmus_fehler = true;
     if (customer.kennung?.includes('*')) customerError.kennung_fehler = true;
     if (!customer.qs_besuch_historik) customerError.historik_fehler = true;
     if (!customer.telefon && !customer.mobil)

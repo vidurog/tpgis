@@ -18,6 +18,8 @@ export type errorSortable =
   | 'ort'
   | 'datenfehler'
   | 'aktiv'
+  | 'sgb_37_3'
+  | 'pflegefirma'
   | 'err_missing_rhythmus'
   | 'err_missing_kennung'
   | 'err_inconsistent_kennung_rhythmus'
@@ -80,6 +82,8 @@ export class ReportsErrorsQueryDto {
     'strasse',
     'plz',
     'ort',
+    'sgb_37_3',
+    'pflegefirma',
     'datenfehler',
     'err_missing_rhythmus',
     'err_missing_kennung',

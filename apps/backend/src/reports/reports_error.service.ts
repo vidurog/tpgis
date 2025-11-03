@@ -26,6 +26,8 @@ export class ReportsErrorService {
     plz: 'k.plz',
     ort: 'k.ort',
     aktiv: 'k.aktiv',
+    sgb_37_3: 'k.sgb_37_3',
+    pflegefirma: 'k.pflegefirma',
 
     // persistiert
     datenfehler: 'kf.datenfehler',
@@ -210,13 +212,16 @@ export class ReportsErrorService {
   // ---------------------------------------------------------------------------
   // XLSX-Export: alle gefilterten Zeilen (Pagination wird ignoriert)
   // ---------------------------------------------------------------------------
+  // src/reports/reports_error.service.ts
+
   async exportLatestErrorsXlsx(
     dto: ReportsErrorsQueryDto,
   ): Promise<{ filename: string; buffer: Buffer }> {
+    // gleiche Basis + Filter wie JSON
     const qb = this.buildBaseQuery();
     this.applyFilters(qb, dto);
 
-    // optional: gleiche Sortierung wie JSON
+    // optionale Sortierung wie JSON
     const sortKey: errorSortable = dto.orderBy ?? 'error_class';
     const sortCol = this.SORT_MAP[sortKey];
     const sortDir: 'ASC' | 'DESC' = dto.orderDir === 'ASC' ? 'ASC' : 'DESC';
@@ -225,49 +230,96 @@ export class ReportsErrorService {
     const rowsRaw = await qb.getRawMany<any>();
     const rows = rowsRaw.map(this.mapRow);
 
-    // Workbook/Worksheet erzeugen
+    // Helper: boolean → "ja"/"nein"
+    const JN = (v: any) => (v ? 'ja' : 'nein');
+
+    // Workbook/Worksheet
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Fehlerreport');
 
-    // Spalten-Header + Reihenfolge (bewusst sprechende Überschriften)
+    // NEUE Spalten (persistiertes Fehler-Schema + Flags aus Customer)
     ws.columns = [
-      { header: 'Kundennummer', key: 'kundennummer', width: 18 },
+      // Stammdaten
+      { header: 'Kundennummer', key: 'kundennummer', width: 22 },
       { header: 'Nachname', key: 'nachname', width: 18 },
       { header: 'Vorname', key: 'vorname', width: 18 },
-      { header: 'Straße', key: 'strasse', width: 22 },
-      { header: 'HNr', key: 'hnr', width: 6 },
-      { header: 'ADZ', key: 'adz', width: 6 },
-      { header: 'PLZ', key: 'plz', width: 8 },
+      { header: 'Straße', key: 'strasse', width: 24 },
+      { header: 'HNr', key: 'hnr', width: 8 },
+      { header: 'ADZ', key: 'adz', width: 8 },
+      { header: 'PLZ', key: 'plz', width: 9 },
       { header: 'Ort', key: 'ort', width: 22 },
-      { header: 'Telefon', key: 'telefon', width: 16 },
-      { header: 'Mobil', key: 'mobil', width: 16 },
       { header: 'Kennung', key: 'kennung', width: 16 },
-      { header: 'Besuchsrhythmus', key: 'besuchrhythmus', width: 16 },
-      { header: 'Historik', key: 'qs_besuch_historik', width: 14 },
+      { header: 'Rhythmus', key: 'besuchsrhythmus', width: 14 },
+
+      // Customer-Flags
+      { header: '§ 37.3', key: 'sgb_37_3', width: 10 },
+      { header: 'Pflegefirma', key: 'pflegefirma', width: 12 },
+
+      // Persistierte Fehler-Zusammenfassung
       { header: 'Datenfehler', key: 'datenfehler', width: 12 },
-      { header: 'Begründung', key: 'begruendung_datenfehler', width: 40 },
-      { header: 'Geocodierbar', key: 'geocodable', width: 14 },
-      { header: 'Klasse', key: 'error_class', width: 22 },
+      { header: 'Error-Class', key: 'error_class', width: 22 },
       { header: 'Fehleranzahl', key: 'error_count', width: 14 },
 
-      // Einzel-Flags
-      { header: 'Kein Rhythmus', key: 'err_missing_rhythmus', width: 14 },
-      { header: 'Keine Kennung', key: 'err_missing_kennung', width: 14 },
-      {
-        header: 'Inkonsistenz Kenn./Rhythmus',
-        key: 'err_inconsistent_kennung_rhythmus',
-        width: 26,
-      },
-      { header: 'Keine Historik', key: 'err_missing_history', width: 14 },
-      { header: 'Kein Telefon/Mobil', key: 'err_missing_contact', width: 18 },
-      { header: 'Keine Geokodierung', key: 'err_no_geocoding', width: 18 },
-      { header: 'Adresse geändert', key: 'err_address_changed', width: 16 },
+      // Einzel-Fehler (persistiert in kunden_fehler)
+      { header: 'Geom-Fehler', key: 'geom_fehler', width: 12 },
+      { header: 'Adr. geändert', key: 'adresse_geaendert', width: 14 },
+      { header: 'Rhythmus-Fehler', key: 'rhythmus_fehler', width: 16 },
+      { header: 'Kennung-Fehler', key: 'kennung_fehler', width: 16 },
+      { header: 'Inkonsistenz', key: 'inkonsistenz', width: 14 },
+      { header: 'Historik-Fehler', key: 'historik_fehler', width: 16 },
+      { header: 'Kontakt-Fehler', key: 'kontakt_fehler', width: 16 },
+      { header: 'Geburtstag-Fehler', key: 'geburtstag_fehler', width: 18 },
+
+      // Detailspalte (Text)
+      { header: 'Adresse neu', key: 'adresse_neu', width: 42 },
     ];
 
-    rows.forEach((r) => ws.addRow(r));
+    // Zeilen schreiben (inkl. "ja/nein"-Mapping)
+    rows.forEach((r) => {
+      ws.addRow({
+        // Stammdaten
+        kundennummer: r.kundennummer,
+        nachname: r.nachname,
+        vorname: r.vorname,
+        strasse: r.strasse,
+        hnr: r.hnr,
+        adz: r.adz,
+        plz: r.plz,
+        ort: r.ort,
+        kennung: r.kennung,
+        besuchsrhythmus: r.besuchrhythmus,
 
-    // Kopfzeile hervorheben
+        // Customer-Flags
+        sgb_37_3: JN(r.sgb_37_3),
+        pflegefirma: JN(r.pflegefirma),
+
+        // Zusammenfassung
+        datenfehler: JN(r.datenfehler),
+        error_class: r.error_class,
+        error_count: r.error_count,
+
+        // Einzel-Fehler
+        geom_fehler: JN(r.geom_fehler),
+        adresse_geaendert: JN(!!r.adresse_neu),
+        rhythmus_fehler: JN(r.rhythmus_fehler),
+        kennung_fehler: JN(r.kennung_fehler),
+        inkonsistenz: JN(r.inkonsistenz),
+        historik_fehler: JN(r.historik_fehler),
+        kontakt_fehler: JN(r.kontakt_fehler),
+        geburtstag_fehler: JN(r.geburtstag_fehler),
+
+        // Detail
+        adresse_neu: r.adresse_neu ?? '',
+      });
+    });
+
+    // Kopfzeile fett + AutoFilter + Freeze
     ws.getRow(1).font = { bold: true };
+    ws.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: ws.columnCount },
+    };
+    ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 1 }];
 
     const buffer = await wb.xlsx.writeBuffer();
     return {
@@ -330,6 +382,6 @@ export class ReportsErrorService {
 
     // Adresse
     adresse_neu: r.adresse_neu ?? null,
-    err_address_changed: !!r.err_address_changed,
+    err_address_changed: r.err_address_changed,
   });
 }

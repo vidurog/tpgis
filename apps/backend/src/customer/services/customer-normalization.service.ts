@@ -253,10 +253,6 @@ export class CustomerNormalization {
       }
     }
 
-    // DEBUG
-    console.log(kennung, rhythmus);
-    console.log(norm_kennung, norm_rhythmus);
-    console.log('');
     return [norm_kennung, norm_rhythmus];
   }
 

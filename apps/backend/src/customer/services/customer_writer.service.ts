@@ -107,7 +107,5 @@ export class CustomerWriterService {
         skipUpdateIfNoValuesChanged: true,
       })
       .execute();
-
-    console.log('ErrorBatch', res); // DEBUG
   }
 }

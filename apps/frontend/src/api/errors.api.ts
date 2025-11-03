@@ -12,6 +12,10 @@ export type ErrorOrderKey =
   | "plz"
   | "ort"
   | "datenfehler"
+  | "aktiv"
+  | "kennung"
+  | "sgb_37_3"
+  | "pflegefirma"
   | "err_missing_rhythmus"
   | "err_missing_kennung"
   | "err_inconsistent_kennung_rhythmus"
@@ -62,10 +66,13 @@ export type ErrorRow = {
   qs_besuch_historik: string | null;
   /** Sammel-Flag „dieser Datensatz hat einen Datenfehler“ */
   datenfehler: boolean | null;
-  /** Freitext-Begründung (falls vorhanden) */
-  begruendung_datenfehler: string | null;
   /** Kunde aktiv? */
   aktiv: boolean;
+  /** Flag für Auftrag sgb 37.3 */
+  sgb_37_3: boolean;
+  /** Flag für Auftrag Pflegefirma */
+  pflegefirma: boolean;
+  geburtstag_fehler: boolean;
 
   /** Adresse prinzipiell geokodierbar? */
   geocodable: boolean;
@@ -75,13 +82,14 @@ export type ErrorRow = {
   error_count: number;
 
   /** Einzelne Fehlerflags (vom Backend abgeleitet) */
-  err_missing_rhythmus: boolean;
-  err_missing_kennung: boolean;
-  err_inconsistent_kennung_rhythmus: boolean;
-  err_missing_history: boolean;
-  err_missing_contact: boolean;
-  err_no_geocoding: boolean;
-  err_address_changed: boolean;
+  rhythmus_fehler: boolean;
+  kennung_fehler: boolean;
+  inkonsistenz: boolean;
+  historik_fehler: boolean;
+  kontakt_fehler: boolean;
+  geom_fehler: boolean;
+
+  adresse_neu?: string | null;
 };
 
 /**
