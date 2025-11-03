@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS kunden,
 kunden_import,
-kunden_import_runs;
+kunden_import_runs,
+kunden_fehler;
 CREATE TABLE IF NOT EXISTS kunden_import (
     id bigserial PRIMARY KEY,
     import_id bigint NOT NULL,
