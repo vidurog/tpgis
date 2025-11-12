@@ -9,10 +9,12 @@ import { CustomerWriterService } from './services/customer_writer.service';
 import { CustomerDTO } from './dto/customer.dto';
 import { CustomerNormalization } from './services/customer-normalization.service';
 import { CustomerGeoService } from './services/customer-geo.service';
-import { CustomerValidationService } from './services/customer-validation.service';
+import { CustomerErrorService } from './services/customer-error.service';
 import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 import { ErrorFactory } from 'src/util/ErrorFactory';
+import { CustomerError } from './customer_errors.entity';
+import { debug } from 'console';
 
 @Injectable()
 export class CustomerMergeService {
@@ -24,7 +26,7 @@ export class CustomerMergeService {
     private readonly normService: CustomerNormalization,
     private readonly geomService: CustomerGeoService,
     private readonly matchService: BuildingMatchService,
-    private readonly validateService: CustomerValidationService,
+    private readonly errorService: CustomerErrorService,
     private readonly runService: CustomerImportsRunsService,
   ) {}
 
@@ -84,18 +86,26 @@ export class CustomerMergeService {
     let updated: number = 0;
     let deleted: number = 0;
     let duplicates: string[] = [];
-    let batch: Array<QueryDeepPartialEntity<Customer>> = [];
+    let mergeBatch: Array<QueryDeepPartialEntity<Customer>> = [];
+    let errorBatch: Array<QueryDeepPartialEntity<CustomerError>> = [];
 
-    // Batch über WriterService in CB schreiben
+    // Batch über WriterService in DB schreiben
     const flush = async () => {
-      if (!batch.length) return;
-      const res = await this.customerWriter.bulkInsert(batch);
+      // Merge Data
+      if (!mergeBatch.length) return;
+      const res = await this.customerWriter.bulkUpsertMergeBatch(mergeBatch);
       const rowsRet = (res?.raw ?? []) as Array<{ xmax: any }>;
       // PostgreSQL: INSERT → xmax = 0, UPDATE → xmax > 0
       const ins = rowsRet.filter((r) => Number(r.xmax) === 0).length;
       inserted += ins;
       updated += rowsRet.length - ins;
-      batch = [];
+      mergeBatch = [];
+
+      // Error Data
+      if (!errorBatch.length) return;
+      const errorRes =
+        await this.customerWriter.bulkUpsertErrorBatch(errorBatch);
+      errorBatch = [];
     };
 
     // nicht vorhandene Kunden aktiv = false markieren
@@ -141,10 +151,10 @@ export class CustomerMergeService {
         qs_besuch_hinweis_1: row.qs_besuch_hinweis_1,
         qs_besuch_hinweis_2: row.qs_besuch_hinweis_2,
         geom: null,
-        datenfehler: false,
-        begruendung_datenfehler: null,
         aktiv: true, // Logik TODO
         gebref_oid: null,
+        sgb_37_3: false,
+        pflegefirma: false,
       };
 
       // 2.2) Pipeline
@@ -158,10 +168,11 @@ export class CustomerMergeService {
       customer.mobil = this.normService.normalizeToE164(customer.mobil);
       customer.ort = this.normService.normalizeOrt(customer.ort!);
 
-      customer.kennung = this.normService.normalizeKennung(customer.kennung);
-      customer.besuchrhythmus = this.normService.normalizeBesuchrhythmus(
-        customer.besuchrhythmus,
-      );
+      [customer.kennung, customer.besuchrhythmus] =
+        this.normService.normalizeKennungRhythmus(
+          customer.kennung,
+          customer.besuchrhythmus,
+        );
 
       // Kundennummer
       customer.kundennummer = this.normService.createKundennummer(
@@ -169,6 +180,11 @@ export class CustomerMergeService {
         customer.vorname,
         customer.geburtstag ?? null,
       );
+
+      // Aufträge splitten
+      // 37.3 SGB und Pflegefirma eigene Flags
+      [customer.sgb_37_3, customer.pflegefirma] =
+        this.normService.splitAuftraege(customer.auftraege);
 
       // ------------------- DB Gebäudematch -------------------
       // T0: Exakt auf (Ort/Kreis, Straße normiert, Hausnummer numerisch, Suffix)
@@ -190,7 +206,7 @@ export class CustomerMergeService {
 
       // ------------------- FALLBACK: OGC-API -------------------
       if (!point) {
-        console.log('Fallback', customer.strasse);
+        console.log(`Fallback`, customer.strasse);
         point = await this.geomService.findGeomViaApi(
           customer.strasse,
           customer.hnr!,
@@ -201,19 +217,8 @@ export class CustomerMergeService {
 
       customer.geom = point ?? null;
 
-      // ------------------- Validieren -------------------
-      const datenfehler: string | null = this.validateService.validate(
-        customer,
-        row.strasse!, // Straße aus Import (nicht normalisiert vom Kunden)
-      );
-
-      if (datenfehler) {
-        customer.datenfehler = true;
-        customer.begruendung_datenfehler = datenfehler;
-      } else {
-        customer.datenfehler = false;
-        customer.begruendung_datenfehler = null;
-      }
+      // ------------------- Validieren (Errors setzen) -------------------
+      const customerErrors = this.errorService.validate(customer, row.strasse!);
 
       // 2.3) DB-Values bauen
       const values: Record<string, any> = {};
@@ -236,13 +241,14 @@ export class CustomerMergeService {
       }
 
       // 2.4) In Batch übernehmen
-      batch.push(values as QueryDeepPartialEntity<Customer>);
+      mergeBatch.push(values as QueryDeepPartialEntity<Customer>);
+      errorBatch.push(customerErrors);
 
       // 2.5) kundennummer → seen[]
       seen.add(customer.kundennummer);
 
       // 2.6) Batch schreiben
-      if (batch.length >= BATCH_SIZE) await flush();
+      if (mergeBatch.length >= BATCH_SIZE) await flush();
     }
 
     // 3) Rest flushen

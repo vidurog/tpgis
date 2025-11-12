@@ -6,19 +6,21 @@ import { Customer } from './customer.entity';
 import { CustomerNormalization } from './services/customer-normalization.service';
 import { CustomerWriterService } from './services/customer_writer.service';
 import { CustomerGeoService } from './services/customer-geo.service';
-import { CustomerValidationService } from './services/customer-validation.service';
+import { CustomerErrorService } from './services/customer-error.service';
 import { HttpModule } from '@nestjs/axios';
 import { CustomerMergeService } from './customer-merge.service';
 import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
+import { CustomerError } from './customer_errors.entity';
 
 /**
  * **CustomerModule** bündelt Services & Entity-Konfiguration rund um Kunden:
- * - TypeORM-Repositories für `Customer` und `CustomerImport`
+ * - TypeORM-Repositories für `Customer`, `CustomerImport` und 'Customer_Error'
  * - Normalisierung (Namen, Adressen, Telefonnummern, Kennung)
  * - Upsert-/Deaktivierungslogik (Writer)
  * - Geokodierung (NRW OGC API) und Gebäudereferenz-Matching
- * - Validierung & Merge-Pipeline
+ * - Validierung & Setzen von Fehlern
+ * - Merge Pipeline
  *
  * @remarks
  * - `HttpModule` wird für externe API-Aufrufe (Geokodierung) benötigt.
@@ -29,6 +31,7 @@ import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_i
     // Repositories registrieren (separat aufgeführt zwecks Klarheit)
     TypeOrmModule.forFeature([CustomerImport]),
     TypeOrmModule.forFeature([Customer]),
+    TypeOrmModule.forFeature([CustomerError]),
     // HTTP-Client (Axios) für externe Dienste
     HttpModule,
   ],
@@ -37,7 +40,7 @@ import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_i
     CustomerWriterService,
     CustomerNormalization,
     CustomerGeoService,
-    CustomerValidationService,
+    CustomerErrorService,
     CustomerMergeService,
     BuildingMatchService,
     CustomerImportsRunsService,

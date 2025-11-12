@@ -17,6 +17,9 @@ export type errorSortable =
   | 'plz'
   | 'ort'
   | 'datenfehler'
+  | 'aktiv'
+  | 'sgb_37_3'
+  | 'pflegefirma'
   | 'err_missing_rhythmus'
   | 'err_missing_kennung'
   | 'err_inconsistent_kennung_rhythmus'
@@ -79,6 +82,8 @@ export class ReportsErrorsQueryDto {
     'strasse',
     'plz',
     'ort',
+    'sgb_37_3',
+    'pflegefirma',
     'datenfehler',
     'err_missing_rhythmus',
     'err_missing_kennung',
@@ -167,4 +172,16 @@ export class ReportsErrorsQueryDto {
   @IsOptional()
   @IsString()
   kundenname?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  aktiv?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  sgb_37_3?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  pflegefirma?: boolean;
 }

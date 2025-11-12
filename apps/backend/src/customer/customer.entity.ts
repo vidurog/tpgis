@@ -116,14 +116,6 @@ export class Customer {
   })
   geom: string | null; // ST_SetSRID(ST_MakePoint(lon,lat),4326)
 
-  /** Flag: Datensatz hat (noch) Datenfehler. */
-  @Column({ type: 'boolean', default: false })
-  datenfehler: boolean;
-
-  /** Begründung/Erklärung der Datenfehler. */
-  @Column({ type: 'text', nullable: true })
-  begruendung_datenfehler: string | null;
-
   /** Flag: Datensatz ist aktiv (wird z. B. beim Merge gepflegt). */
   @Column({ type: 'boolean', default: true })
   aktiv: boolean;
@@ -131,4 +123,10 @@ export class Customer {
   /** OID/Schlüssel aus der Gebäudereferenz, falls gematcht. */
   @Column({ type: 'text', nullable: true })
   gebref_oid: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  sgb_37_3: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  pflegefirma: boolean;
 }

@@ -11,6 +11,7 @@ import { ReportsModule } from './reports/reports.module';
 // ✅ Migration als Klasse importieren (sicherste Variante im Nest-Runtime)
 import { CreateKundenImport1710010000000 } from './migrations/1710010000000_create_kunden_import.migration';
 import path from 'path';
+import { CustomerError } from './customer/customer_errors.entity';
 // (Alternative: per Glob – siehe Kommentar unten)
 
 @Module({
@@ -27,7 +28,7 @@ import path from 'path';
         password: cs.get<string>('DB_PASSWORD') ?? 'app',
         database: cs.get<string>('DB_NAME') ?? 'tpgis_healthcare',
 
-        entities: [CustomerImport, Customer, CustomerImportRuns],
+        entities: [CustomerImport, Customer, CustomerImportRuns, CustomerError],
         migrations: [path.join(__dirname, 'migrations/*.migration.ts')],
 
         synchronize: false,

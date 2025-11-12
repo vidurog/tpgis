@@ -81,15 +81,13 @@ export type CustomerDTO = {
    */
   geom: { lon: number; lat: number } | null;
 
-  /** Flag: Datensatz hat (noch) Datenfehler. */
-  datenfehler: boolean;
-
-  /** Begründung/Erklärung der Datenfehler. */
-  begruendung_datenfehler: string | null;
-
   /** Flag: Datensatz ist aktiv. */
   aktiv: boolean;
 
   /** OID/Schlüssel aus der Gebäudereferenz (falls gematcht). */
   gebref_oid: string | null;
+
+  sgb_37_3: boolean;
+
+  pflegefirma: boolean;
 };

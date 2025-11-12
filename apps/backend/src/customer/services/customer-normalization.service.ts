@@ -198,7 +198,7 @@ export class CustomerNormalization {
     else if (kennung.includes('3')) return 'Pflegegrad 3';
     else if (kennung.includes('4')) return 'Pflegegrad 4';
     else if (kennung.includes('5')) return 'Pflegegrad 5';
-    else return 'Kein Pflegegrad';
+    else return null;
   }
 
   normalizeBesuchrhythmus(besuchrhythmus: string | null) {
@@ -209,6 +209,59 @@ export class CustomerNormalization {
     if (besuchrhythmus.includes('3') || besuchrhythmus.includes('viertel'))
       return '3 Monate';
     else return null;
+  }
+
+  normalizeKennungRhythmus(
+    kennung: string | null,
+    rhythmus: string | null,
+  ): [string | null, string | null] {
+    let norm_rhythmus: string | null = this.normalizeBesuchrhythmus(rhythmus);
+    let norm_kennung: string | null = this.normalizeKennung(kennung);
+    if (!kennung && !rhythmus) return [null, null];
+
+    // Besuchrhythmus vorhanden -> Kennung setzen
+    if (!kennung && rhythmus) {
+      if (rhythmus!.includes('6') || rhythmus!.includes('halb')) {
+        norm_rhythmus = '6 Monate';
+        norm_kennung = `Pflegegrad 2*`;
+      }
+      if (rhythmus!.includes('3') || rhythmus!.includes('viertel')) {
+        norm_rhythmus = '3 Monate';
+        norm_kennung = `Pflegegrad 4*`;
+      } else {
+        norm_rhythmus = null;
+      }
+    }
+
+    // Kennung vorhanden
+    if (!rhythmus && kennung) {
+      if (kennung!.includes('1')) {
+        kennung = 'Pflegegrad 1';
+        rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('2')) {
+        norm_kennung = 'Pflegegrad 2';
+        norm_rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('3')) {
+        norm_kennung = 'Pflegegrad 3';
+        norm_rhythmus = `6 Monate*`;
+      } else if (kennung!.includes('4')) {
+        norm_kennung = 'Pflegegrad 4';
+        norm_rhythmus = `3 Monate*`;
+      } else if (kennung!.includes('5')) {
+        norm_kennung = 'Pflegegrad 5';
+        norm_rhythmus = `6 Monate*`;
+      }
+    }
+
+    return [norm_kennung, norm_rhythmus];
+  }
+
+  splitAuftraege(auftraege: string | null): [boolean, boolean] {
+    if (!auftraege) return [false, false];
+    const SGB_373 = auftraege.includes('37.3 SGB');
+    const pflegefirma = auftraege.includes('Pflegefirma');
+    // return [37.3 SGB, Pflegefirma]
+    return [SGB_373, pflegefirma];
   }
 
   /**

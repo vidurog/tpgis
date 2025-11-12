@@ -1,9 +1,9 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class GebrefNorm1759612473602 implements MigrationInterface {
-    name = 'GebrefNorm1759612473602';
+  name = 'GebrefNorm1759612473602';
 
-public async up(queryRunner: QueryRunner): Promise<void> {
+  public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       -- 0) Extensions (idempotent)
       CREATE EXTENSION IF NOT EXISTS postgis;
@@ -80,9 +80,11 @@ public async up(queryRunner: QueryRunner): Promise<void> {
       -- e) Räumlich (optional, aber nützlich)
       CREATE INDEX IF NOT EXISTS idx_gebref_norm_geom
         ON tp_gis.gebref_norm USING gist (geom_4326);
+
+      -- 3) REFRESH Materialized View
+      REFRESH MATERIALIZED VIEW tp_gis.gebref_norm;
     `);
   }
-
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
