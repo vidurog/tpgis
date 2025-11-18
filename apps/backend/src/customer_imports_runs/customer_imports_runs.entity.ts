@@ -10,7 +10,7 @@ import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
  *   übernommen wurden (siehe Service `mergeImport`).
  * - Primärschlüssel ist die fachliche `import_id` (als `bigint` in der DB).
  */
-@Entity({ name: 'kunden_import_runs' })
+@Entity({ name: 'kunden_import_runs', schema: 'tp_gis_import' })
 export class CustomerImportRuns {
   /**
    * Fachliche Import-ID (z. B. Zeitstempel-basiert).
@@ -40,4 +40,16 @@ export class CustomerImportRuns {
    */
   @Column({ name: 'inserted_rows', type: 'int' })
   inserted_rows: number;
+
+  /**
+   * Anzahl der im Staging **aktualisierten** Zeilen (ohne Validierungsfehler).
+   */
+  @Column({ name: 'updated_rows', type: 'int' })
+  updated_rows: number;
+
+  /**
+   * Anzahl der **gelöschten** Zeilen.
+   */
+  @Column({ name: 'deleted_rows', type: 'int' })
+  deleted_rows: number;
 }

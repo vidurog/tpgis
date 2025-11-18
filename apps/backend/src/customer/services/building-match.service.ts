@@ -19,7 +19,7 @@ Die Stufen T1–T3 können später als Fallbacks ergänzt werden.
  * @remarks
  * - `lon` / `lat` sind WGS84-Koordinaten (ST_X/ST_Y auf `geom_4326`).
  * - `matched*` spiegeln die gematchten Rohwerte aus der Referenz wider (zur Nachvollziehbarkeit im UI/Logging).
- * - `oid` ist der eindeutige Schlüssel aus der Gebäudereferenz (z. B. `tp_gis.gebref_norm.oid`).
+ * - `oid` ist der eindeutige Schlüssel aus der Gebäudereferenz (z. B. `tp_gis_import.gebref_norm.oid`).
  */
 export type GebRefMatch = {
   /** Längengrad (WGS84). */
@@ -38,7 +38,7 @@ export type GebRefMatch = {
 
 /**
  * Service für das Matching von Kundenadressen gegen die
- * normalisierte Gebäudereferenz (`tp_gis.gebref_norm`).
+ * normalisierte Gebäudereferenz (`tp_gis_import.gebref_norm`).
  *
  * @remarks
  * - Nutzt ausschließlich **serverseitige Normalisierung** (unaccent, tg_norm_*, tg_house_no_*),
@@ -78,7 +78,7 @@ export class BuildingMatchService {
     ort: string | null,
     plz: string | null, // TODO kommt nicht in Gebaeude vor
   ): Promise<GebRefMatch | null> {
-    // Exakter Treffer gegen die materialisierte Sicht `tp_gis.gebref_norm`.
+    // Exakter Treffer gegen die materialisierte Sicht `tp_gis_import.gebref_norm`.
     // - Eingaben werden in einem Subselect `p` normalisiert:
     //   * kreis_in  := lower(unaccent($1))                            ← ort (Benennung historisch; vergleicht mit r.kreis_norm)
     //   * street_in := lower(unaccent(tg_norm_street_name($2)))       ← str (Firmenregel zur Straßennormierung)
@@ -98,7 +98,7 @@ export class BuildingMatchService {
           r.ort_src    AS ort,
           ST_X(r.geom_4326) AS lon,
           ST_Y(r.geom_4326) AS lat
-        FROM gebref_norm r,
+        FROM tp_gis_import.gebref_norm r,
              ( SELECT
                  lower(unaccent($1))                                AS kreis_in,
                  lower(unaccent(topogrids.tg_norm_street_name($2))) AS street_in,
@@ -123,18 +123,18 @@ export class BuildingMatchService {
     //                Wir akzeptieren nur eindeutige Ergebnisse, das heißt bei
     //                Kombinationen Straße/Hausnummer, die in einem Ort/Kreis
     //                unter mehreren Postleitzahlen vorkommen, geben wir null zurück
-    let rows = await this.ds.query(sql, [ort, str, hnr, adz, plz,"p"]);
+    let rows = await this.ds.query(sql, [ort, str, hnr, adz, plz, 'p']);
 
     if (!rows.length) {
-       rows = await this.ds.query(sql, [ort, str, hnr, adz, plz,"k"]);
+      rows = await this.ds.query(sql, [ort, str, hnr, adz, plz, 'k']);
     }
 
-    if (rows.length>1) {
-      console.log("mehrere Treffer für ", plz, ort, str, hnr, adz, rows);
+    if (rows.length > 1) {
+      console.log('mehrere Treffer für ', plz, ort, str, hnr, adz, rows);
     }
 
     // Kein oder mehrere Treffer → null (kein Fallback auf T1–T3 in dieser Methode).
-    if (rows.length!==1) return null;
+    if (rows.length !== 1) return null;
 
     // Ersten (besten) Treffer aufnehmen und in stark typisiertes Objekt mappen.
     const pick = rows[0];

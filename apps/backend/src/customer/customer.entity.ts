@@ -9,11 +9,14 @@ import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
  * - Geometrie (`geom`) wird in **WGS84 (SRID 4326)** gespeichert.
  * - Der Primärschlüssel ist die fachliche `kundennummer`.
  */
-@Entity({ name: 'kunden' })
+@Entity({ name: 'kunden', schema: 'tp_gis_import' })
 export class Customer {
   /** Fachliche, eindeutige Kennung des Kunden (Primärschlüssel). */
   @PrimaryColumn({ type: 'text', name: 'kundennummer' })
   kundennummer: string;
+
+  @Column({ type: 'bigint' })
+  id: string; // bigint
 
   /** Nachname der Person. */
   @Column({ type: 'text', nullable: true })

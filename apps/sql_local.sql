@@ -1,8 +1,8 @@
-DROP TABLE IF EXISTS kunden,
-kunden_import,
-kunden_import_runs,
-kunden_fehler;
-CREATE TABLE IF NOT EXISTS kunden_import (
+DROP TABLE IF EXISTS tp_gis_import.kunden,
+tp_gis_import.kunden_import,
+tp_gis_import.kunden_import_runs,
+tp_gis_import.kunden_fehler;
+CREATE TABLE IF NOT EXISTS tp_gis_import.kunden_import (
     id bigserial PRIMARY KEY,
     import_id bigint NOT NULL,
     imported_at timestamptz NOT NULL,
@@ -26,8 +26,9 @@ CREATE TABLE IF NOT EXISTS kunden_import (
     qs_besuch_hinweis_1 text,
     qs_besuch_hinweis_2 text
 );
-CREATE TABLE IF NOT EXISTS kunden (
+CREATE TABLE IF NOT EXISTS tp_gis_import.kunden (
     kundennummer text PRIMARY KEY,
+    id bigserial,
     nachname text,
     vorname text,
     strasse text,
@@ -50,15 +51,33 @@ CREATE TABLE IF NOT EXISTS kunden (
     qs_besuch_hinweis_1 text,
     qs_besuch_hinweis_2 text,
     geom geometry(Point, 4326),
+    datenfehler boolean NOT NULL DEFAULT false,
+    begruendung_datenfehler text,
     aktiv boolean NOT NULL DEFAULT true,
     gebref_oid text,
     sgb_37_3 boolean NOT NULL DEFAULT false,
     pflegefirma boolean NOT NULL DEFAULT false
 );
-CREATE TABLE IF NOT EXISTS kunden_import_runs (
+CREATE TABLE IF NOT EXISTS tp_gis_import.kunden_import_runs (
     import_id bigint PRIMARY KEY,
     imported_at timestamptz NOT NULL,
     imported_by text NOT NULL,
     merged boolean DEFAULT false,
-    inserted_rows int NOT NULL
+    inserted_rows int NOT NULL,
+    deleted_rows int NOT NULL DEFAULT 0,
+    updated_rows int NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS tp_gis_import.kunden_fehler (
+    kundennummer text PRIMARY KEY,
+    datenfehler boolean NOT NULL DEFAULT FALSE,
+    geom_fehler boolean NOT NULL DEFAULT FALSE,
+    klasse text NOT NULL,
+    fehleranzahl integer NOT NULL DEFAULT 0,
+    rhythmus_fehler boolean NOT NULL DEFAULT FALSE,
+    kennung_fehler boolean NOT NULL DEFAULT FALSE,
+    inkonsistenz boolean NOT NULL DEFAULT FALSE,
+    historik_fehler boolean NOT NULL DEFAULT FALSE,
+    kontakt_fehler boolean NOT NULL DEFAULT FALSE,
+    geburtstag_fehler boolean NOT NULL DEFAULT FALSE,
+    adresse_neu text
 );

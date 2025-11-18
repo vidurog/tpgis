@@ -15,6 +15,7 @@ import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_i
 import { ErrorFactory } from 'src/util/ErrorFactory';
 import { CustomerError } from './customer_errors.entity';
 import { debug } from 'console';
+import { of } from 'rxjs';
 
 @Injectable()
 export class CustomerMergeService {
@@ -48,7 +49,7 @@ export class CustomerMergeService {
               ki.strasse AS addr,
               nullif(trim(coalesce(ki.plz::text,'')), '') AS norm_plz,
               lower(trim(coalesce(ki.ort,''))) AS norm_ort
-            FROM kunden_import ki
+            FROM tp_gis_import.kunden_import ki
             WHERE ki.import_id = $1
           )
           SELECT DISTINCT ON (norm_name, addr, norm_plz, norm_ort) *
@@ -119,11 +120,18 @@ export class CustomerMergeService {
     const rows = await this.importRepo.query(this.importQuery, [import_id]);
     if (!rows.length) throw ErrorFactory.emptyFile();
     console.log('deduped rows:', rows.length);
+    // DEBUG
+    console.log('Rows');
+
+    for (const [i, row] of rows.entries()) {
+      console.log(i, row);
+    }
 
     // 2) Pipeline pro Zeile
     for await (const [i, row] of rows.entries()) {
       // 2.1) Kunden DTO aus kunden_import bauen
       let customer: CustomerDTO = {
+        id: row.id,
         kundennummer: '000',
         nachname: row.kunde!,
         vorname: null,
@@ -205,6 +213,7 @@ export class CustomerMergeService {
       }
 
       // ------------------- FALLBACK: OGC-API -------------------
+      /*
       if (!point) {
         console.log(`Fallback`, customer.strasse);
         point = await this.geomService.findGeomViaApi(
@@ -214,6 +223,7 @@ export class CustomerMergeService {
           customer.ort!,
         );
       }
+      */
 
       customer.geom = point ?? null;
 
@@ -258,7 +268,15 @@ export class CustomerMergeService {
     await deactivate();
 
     // 5) ImportRun merged = true
-    this.runService.mergeImport(import_id);
+    this.runService.mergeImport(import_id, deleted, updated);
+
+    // DEBUG
+    console.log('Customer Merge Service Result:');
+    console.log(
+      `Merge complete: inserted=${inserted}, updated=${updated}, deleted=${deleted}, total=${
+        inserted + updated
+      }, duplicates=${duplicates.length}`,
+    );
 
     return {
       import_id,

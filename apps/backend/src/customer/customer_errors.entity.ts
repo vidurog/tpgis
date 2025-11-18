@@ -1,6 +1,6 @@
 import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
-@Entity({ name: 'kunden_fehler' })
+@Entity({ name: 'kunden_fehler', schema: 'tp_gis_import' })
 export class CustomerError {
   @PrimaryColumn({ type: 'text', name: 'kundennummer' })
   kundennummer: string;

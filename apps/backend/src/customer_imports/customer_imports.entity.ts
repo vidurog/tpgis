@@ -1,6 +1,6 @@
 import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'kunden_import' })
+@Entity({ name: 'kunden_import', schema: 'tp_gis_import' })
 export class CustomerImport {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string; //bigserial

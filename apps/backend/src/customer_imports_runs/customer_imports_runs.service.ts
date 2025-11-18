@@ -54,7 +54,14 @@ export class CustomerImportsRunsService {
    * Wird typischerweise nach erfolgreichem Merge in den Kundenbestand
    * vom Merge-Service aufgerufen.
    */
-  async mergeImport(import_id: string) {
-    await this.runRepo.update({ import_id: import_id }, { merged: true });
+  async mergeImport(
+    import_id: string,
+    deleted_rows: number,
+    updated_rows: number,
+  ) {
+    await this.runRepo.update(
+      { import_id: import_id },
+      { merged: true, deleted_rows, updated_rows },
+    );
   }
 }

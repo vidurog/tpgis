@@ -29,6 +29,7 @@ import { ErrorFactory } from 'src/util/ErrorFactory';
  * (Nur für die Doku – der tatsächliche Error-Body kommt von deiner ErrorFactory/Exceptions.)
  */
 const errorSchema = {
+  // TODO Anpassen je nach tatsächlichen Fehlerantworten
   type: 'object',
   properties: {
     statusCode: { type: 'integer', example: 400 },
@@ -148,7 +149,7 @@ export class CustomerImportsController {
   async importXlsx(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw ErrorFactory.emptyFile(); // Absicherung, falls Multer doch nichts lieferte
     const full = path.resolve(file.path);
-    const run = { import_id: String(Date.now()), user: 'leon' }; // später aus Auth
+    const run = { import_id: String(Date.now()), user: 'leon' }; // TODO später aus Auth
     // Falls importXlsx Error wirft, handled NestJS das automatisch → Exception-Filter/HTTP-Response.
     return this.importService.importXlsxToStaging(full, run);
   }

@@ -9,7 +9,6 @@ import { CustomerImportsModule } from './customer_imports/customer_imports.modul
 import { ReportsModule } from './reports/reports.module';
 
 // ✅ Migration als Klasse importieren (sicherste Variante im Nest-Runtime)
-import { CreateKundenImport1710010000000 } from './migrations/1710010000000_create_kunden_import.migration';
 import path from 'path';
 import { CustomerError } from './customer/customer_errors.entity';
 // (Alternative: per Glob – siehe Kommentar unten)

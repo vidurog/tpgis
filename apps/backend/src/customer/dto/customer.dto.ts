@@ -11,6 +11,8 @@ export type CustomerDTO = {
   /** Eindeutige Kundennummer (fachlich). */
   kundennummer: string;
 
+  id: string;
+
   /** Nachname der Person. */
   nachname: string;
 

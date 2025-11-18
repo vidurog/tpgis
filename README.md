@@ -47,7 +47,7 @@ tpgis$ docker exec -it db bash
 root@db# psql -U app -d tpgis_healthcare < /tmp/gebaeude.sql
 
 # Materialized View aktualisieren
-root@db# psql -U app -d tpgis_healthcare -c "REFRESH MATERIALIZED VIEW tp_gis.gebref_norm;"
+root@db# psql -U app -d tpgis_healthcare -c "REFRESH MATERIALIZED VIEW tp_gis_import.gebref_norm;"
 ```
 
 ## Applikationen laufen auf

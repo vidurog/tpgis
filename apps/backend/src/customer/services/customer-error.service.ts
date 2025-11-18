@@ -34,8 +34,6 @@ export class CustomerErrorService {
     kennung_rhythmus['Pflegegrad 4'] = '3';
     kennung_rhythmus['Pflegegrad 5'] = '3';
 
-    let errorCount = 0;
-
     let customerError: CustomerErrorDTO = {
       kundennummer: customer.kundennummer,
       datenfehler: false,
@@ -51,24 +49,44 @@ export class CustomerErrorService {
       adresse_neu: null,
     };
 
-    // Value null errors
+    // ######### Datenfehler #########
+    // Geokodierung fehlt
     if (!customer.geom) {
       customerError.geom_fehler = true;
-      errorCount++;
       customerError.datenfehler = true;
+      customerError.klasse = 'ADDRESS_NOT_GEOCODABLE';
     }
-    if (customer.besuchrhythmus?.includes('*'))
-      console.log(customer.besuchrhythmus); // DEBUG
-    console.log(customer.besuchrhythmus?.includes('*'));
-    customerError.rhythmus_fehler = true;
-    if (customer.kennung?.includes('*')) customerError.kennung_fehler = true;
-    if (!customer.qs_besuch_historik) customerError.historik_fehler = true;
-    if (!customer.telefon && !customer.mobil)
-      customerError.kontakt_fehler = true;
+
+    // Geburtstag fehlt
     if (!customer.geburtstag) {
       customerError.geburtstag_fehler = true;
       customerError.datenfehler = true;
     }
+
+    if (!customer.besuchrhythmus && !customer.kennung) {
+      customerError.rhythmus_fehler = true;
+      customerError.kennung_fehler = true;
+      customerError.datenfehler = true;
+    }
+
+    // ######### Weitere Fehlerflags #########
+
+    // Besuchrhytmus generiert
+    if (customer.besuchrhythmus?.includes('*')) {
+      customerError.rhythmus_fehler = true;
+    }
+
+    // Kennung generiert
+    if (customer.kennung?.includes('*')) {
+      customerError.kennung_fehler = true;
+    }
+
+    // Historik fehlt
+    if (!customer.qs_besuch_historik) customerError.historik_fehler = true;
+
+    // Kein Kontakt (Telefon und Mobil fehlen)
+    if (!customer.telefon && !customer.mobil)
+      customerError.kontakt_fehler = true;
 
     // Inkonsistenz Kennung/Rhythymus
     if (
@@ -77,7 +95,6 @@ export class CustomerErrorService {
       !customer.besuchrhythmus.includes(kennung_rhythmus[customer.kennung])
     ) {
       customerError.inkonsistenz = true;
-      errorCount++;
     }
 
     // Adresse geändert
@@ -89,16 +106,9 @@ export class CustomerErrorService {
       customerError.adresse_neu = `${rawStrasse} -> ${ganzeStr}`;
     }
 
-    // Fehlerklasse
-    // - ADDRESS_GEOCODABLE: Adresse hat Problem, ist aber prinzipiell geokodierbar (geom/gebref_oid vorhanden)
-    // - ADDRESS_NOT_GEOCODABLE: Problem und NICHT geokodierbar
-    // - NO_ADDRESS_ISSUE: kein Adressproblem
-    if (customerError.adresse_neu) {
-      if (customerError.geom_fehler) {
-        customerError.klasse = 'ADDRSS_NOT_GEOCODABLE';
-      } else {
-        customerError.klasse = 'ADDRESS_GEOCODABLE';
-      }
+    // Fehlerklasse ADDRESS_GEOCODABLE setzen, wenn Adresse geändert wurde und Geokodierung vorhanden ist
+    if (customerError.adresse_neu && !customerError.geom_fehler) {
+      customerError.klasse = 'ADDRESS_GEOCODABLE';
     }
 
     return customerError;
