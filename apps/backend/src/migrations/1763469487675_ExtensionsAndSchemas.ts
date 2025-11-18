@@ -1,14 +1,22 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface {
-  name = 'TopogridsSchemaAndFuncs1759612096934';
+export class ExtensionsAndSchemas1763469487675 implements MigrationInterface {
+  name = 'ExtensionsAndSchemas1763469487675';
 
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      -- 1) Schema
-      CREATE SCHEMA IF NOT EXISTS topogrids;
+  public async up(q: QueryRunner): Promise<void> {
+    // 1) Extensions
+    await q.query(`CREATE EXTENSION IF NOT EXISTS postgis;`);
+    await q.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`);
+    await q.query(`CREATE EXTENSION IF NOT EXISTS unaccent;`);
+    await q.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm;`);
 
-      -- 2) tg_to_number (Basis für weitere Funktionen)
+    // 2) Schemas
+    await q.query(`CREATE SCHEMA IF NOT EXISTS tp_gis_import;`);
+    await q.query(`CREATE SCHEMA IF NOT EXISTS static_data;`);
+    await q.query(`CREATE SCHEMA IF NOT EXISTS topogrids;`);
+
+    // 3) Topogrids-Funktionen (1:1 aus deiner alten Migration)
+    await q.query(`
       CREATE OR REPLACE FUNCTION topogrids.tg_to_number(
         p_string in varchar,
         p_replace_non_digits in boolean default false
@@ -44,7 +52,6 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
       end;
       $$;
 
-      -- 3) Hausnummer: Appendix (Buchstaben etc.)
       CREATE OR REPLACE FUNCTION topogrids.tg_house_no_appendix(p_hno TEXT)
       RETURNS TEXT
       LANGUAGE SQL
@@ -56,7 +63,6 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
         END;
       $$;
 
-      -- 4) Hausnummer: numerischer Teil
       CREATE OR REPLACE FUNCTION topogrids.tg_house_no_num_part(p_hno TEXT)
       RETURNS TEXT
       LANGUAGE SQL
@@ -68,7 +74,6 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
         END
       $$;
 
-      -- 5) Normalisierung: generisch (Name)
       CREATE OR REPLACE FUNCTION topogrids.tg_norm_name(p_name in varchar)
       RETURNS varchar
       LANGUAGE plpgsql
@@ -84,7 +89,6 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
       end;
       $$;
 
-      -- 6) Normalisierung: Straßenname (baut auf tg_norm_name auf)
       CREATE OR REPLACE FUNCTION topogrids.tg_norm_street_name(p_name in varchar)
       RETURNS varchar
       LANGUAGE plpgsql
@@ -98,7 +102,6 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
       end;
       $$;
 
-      -- 7) ID-Generator (zeitbasiert + 12 zufällige Base36-Zeichen)
       CREATE OR REPLACE FUNCTION topogrids.tg_new_id()
       RETURNS character
       LANGUAGE plpgsql
@@ -122,20 +125,25 @@ export class TopoGridsSchemaAndFuncs1759612096934 implements MigrationInterface 
     `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      -- Funktionen in umgekehrter Reihenfolge droppen
-      DROP FUNCTION IF EXISTS topogrids.tg_new_id();
-      DROP FUNCTION IF EXISTS topogrids.tg_norm_street_name(varchar);
-      DROP FUNCTION IF EXISTS topogrids.tg_norm_name(varchar);
-      DROP FUNCTION IF EXISTS topogrids.tg_house_no_num_part(text);
-      DROP FUNCTION IF EXISTS topogrids.tg_house_no_appendix(text);
-      DROP FUNCTION IF EXISTS topogrids.tg_to_number(varchar, boolean);
+  public async down(q: QueryRunner): Promise<void> {
+    // Optional sauber machen
+    await q.query(`DROP FUNCTION IF EXISTS topogrids.tg_new_id();`);
+    await q.query(
+      `DROP FUNCTION IF EXISTS topogrids.tg_norm_street_name(varchar);`,
+    );
+    await q.query(`DROP FUNCTION IF EXISTS topogrids.tg_norm_name(varchar);`);
+    await q.query(
+      `DROP FUNCTION IF EXISTS topogrids.tg_house_no_num_part(text);`,
+    );
+    await q.query(
+      `DROP FUNCTION IF EXISTS topogrids.tg_house_no_appendix(text);`,
+    );
+    await q.query(
+      `DROP FUNCTION IF EXISTS topogrids.tg_to_number(varchar, boolean);`,
+    );
 
-      -- Schema zuletzt (nur wenn leer)
-      DROP SCHEMA IF EXISTS topogrids CASCADE;
-    `);
+    await q.query(`DROP SCHEMA IF EXISTS topogrids CASCADE;`);
+    await q.query(`DROP SCHEMA IF EXISTS tp_gis_import CASCADE;`);
+    await q.query(`DROP SCHEMA IF EXISTS static_data CASCADE;`);
   }
 }
-
-
