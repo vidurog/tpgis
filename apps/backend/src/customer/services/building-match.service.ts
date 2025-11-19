@@ -125,9 +125,9 @@ export class BuildingMatchService {
     //                unter mehreren Postleitzahlen vorkommen, geben wir null zurück
     let rows = await this.ds.query(sql, [ort, str, hnr, adz, plz, 'p']);
 
-    if (!rows.length) {
-      rows = await this.ds.query(sql, [ort, str, hnr, adz, plz, 'k']);
-    }
+    // if (!rows.length) {
+    //   rows = await this.ds.query(sql, [ort, str, hnr, adz, plz, 'k']);
+    // }
 
     if (rows.length > 1) {
       console.log('mehrere Treffer für ', plz, ort, str, hnr, adz, rows);
