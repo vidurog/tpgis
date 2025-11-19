@@ -12,6 +12,8 @@ lerna-debug.log*
 sql/
 *.session.sql
 
+# Locale files
+plz/PLZ_Gebiete.geojson
 
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
