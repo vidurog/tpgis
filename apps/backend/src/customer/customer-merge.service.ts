@@ -14,8 +14,6 @@ import { BuildingMatchService } from './services/building-match.service';
 import { CustomerImportsRunsService } from 'src/customer_imports_runs/customer_imports_runs.service';
 import { ErrorFactory } from 'src/util/ErrorFactory';
 import { CustomerError } from './customer_errors.entity';
-import { debug } from 'console';
-import { of } from 'rxjs';
 
 @Injectable()
 export class CustomerMergeService {
@@ -120,12 +118,6 @@ export class CustomerMergeService {
     const rows = await this.importRepo.query(this.importQuery, [import_id]);
     if (!rows.length) throw ErrorFactory.emptyFile();
     console.log('deduped rows:', rows.length);
-    // DEBUG
-    console.log('Rows');
-
-    for (const [i, row] of rows.entries()) {
-      console.log(i, row);
-    }
 
     // 2) Pipeline pro Zeile
     for await (const [i, row] of rows.entries()) {
@@ -269,14 +261,6 @@ export class CustomerMergeService {
 
     // 5) ImportRun merged = true
     this.runService.mergeImport(import_id, deleted, updated);
-
-    // DEBUG
-    console.log('Customer Merge Service Result:');
-    console.log(
-      `Merge complete: inserted=${inserted}, updated=${updated}, deleted=${deleted}, total=${
-        inserted + updated
-      }, duplicates=${duplicates.length}`,
-    );
 
     return {
       import_id,

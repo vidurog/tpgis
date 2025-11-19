@@ -168,7 +168,6 @@ export class ReportsErrorService {
       cnt_address_geocodable: string;
       cnt_address_not_geocodable: string;
     }>();
-    console.log('Stats Raw:', statsRaw); // DEBUG
 
     // rows vorbereiten
     const rowsQb = this.buildBaseQuery();
