@@ -145,6 +145,7 @@ export class CreateCoreTables1763469490481 implements MigrationInterface {
         import_id      bigint        PRIMARY KEY,
         imported_at    timestamptz   NOT NULL,
         imported_by    text          NOT NULL,
+        file_name       text          NOT NULL,
         merged         boolean       DEFAULT false,
         inserted_rows  int           NOT NULL
       );

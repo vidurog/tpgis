@@ -27,6 +27,10 @@ export class CustomerImportRuns {
   @Column({ name: 'imported_by', type: 'text' })
   imported_by!: string;
 
+  /** Dateiname */
+  @Column({ name: 'file_name', type: 'text' })
+  file_name: string;
+
   /**
    * Flag: Wurden die Staging-Daten dieses Laufs bereits in den Kundenbestand gemerged?
    * Standard: `false`.

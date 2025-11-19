@@ -35,12 +35,14 @@ export class CustomerImportsRunsService {
     imported_at: Date,
     imported_by: string,
     inserted_rows: number,
+    file_name: string,
   ) {
     const run = await this.runRepo.create({
       import_id: import_id,
       imported_at,
       imported_by,
       inserted_rows,
+      file_name,
     });
     await this.runRepo.save(run);
   }

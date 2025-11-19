@@ -46,6 +46,10 @@ export class CustomerImportsService {
     let errors: ValidationError[] = [];
     let batch: StagingDto[] = [];
 
+    // 0) Dateiname bereinigen für Import_Runs
+    const filename = filePath.split('/').pop();
+    const cleanName = filename!.split('-').slice(1).join('-');
+
     // 1) Batch über WriterService in DB schreiben
     const flush = async () => {
       if (!batch.length) return;
@@ -86,6 +90,7 @@ export class CustomerImportsService {
       imported_at,
       run.user,
       staged,
+      cleanName,
     );
 
     console.log('failed:', failed); //DEBUG
