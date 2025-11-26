@@ -50,8 +50,10 @@ function SortIndicator({
  */
 export default function ImportTable({
   import_id, // optional: Filter; default = alle
+  runsReloadKey,
 }: {
   import_id?: string | null;
+  runsReloadKey?: number;
 }) {
   const [dto, setDto] = useState<CustomerImportDTO | null>(null);
   const [loading, setLoading] = useState(false);
@@ -104,17 +106,17 @@ export default function ImportTable({
     }
   }
 
-  /*
+  /* @Deprecated
   useEffect(() => {
     // Wenn Filter sich ändert, zurück auf Seite 1 (offset=0)
     setOffset(0);
   }, [filters]);
-*/
+  */
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [limit, offset, orderBy, orderDir, import_id, reloadKey]);
+  }, [limit, offset, orderBy, orderDir, import_id, reloadKey, runsReloadKey]);
 
   const rows: CustomerImport[] = dto?.rows ?? [];
   const total = dto?.total ?? 0;

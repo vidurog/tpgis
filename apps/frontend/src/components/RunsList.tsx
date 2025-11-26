@@ -42,9 +42,11 @@ export default function RunsList({
     }
   }
 
+  // Reload bei Key Änderung (z. B. nach Upload/Merge))
   useEffect(() => {
     load();
-  }, [reloadKey]); //
+  }, [reloadKey]);
+  // Sync selectedId von außen
   useEffect(() => {
     setActiveId(selectedId ?? null);
   }, [selectedId]);

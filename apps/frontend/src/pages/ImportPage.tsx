@@ -55,7 +55,7 @@ export default function ImportPage() {
 
       <div className="import__table">
         {/* Optional: ImportTable auf selectedRunId filtern*/}
-        <ImportTable /* später: runId-Filter */ />
+        <ImportTable runsReloadKey={runsReloadKey} />
       </div>
 
       {/* 
