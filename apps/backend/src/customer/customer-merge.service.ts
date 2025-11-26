@@ -260,7 +260,7 @@ export class CustomerMergeService {
     await deactivate();
 
     // 5) ImportRun merged = true
-    this.runService.mergeImport(import_id, deleted, updated, inserted);
+    await this.runService.mergeImport(import_id, deleted, updated, inserted);
 
     return {
       import_id,
