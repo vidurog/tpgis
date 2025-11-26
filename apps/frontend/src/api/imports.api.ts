@@ -15,6 +15,12 @@ export type ImportRun = {
   merged: boolean;
   /** Anzahl eingefügter Zeilen im Merge-Vorgang */
   inserted_rows: number;
+  /** Anzahl gesamter Zeilen */
+  size: number;
+  /** Anzahl gesamter Zeilen */
+  deleted_rows: number;
+  /** Anzahl gesamter Zeilen */
+  updated_rows: number;
 };
 
 /** Paginierte DTO-Hülle für {@link ImportRun}. */
@@ -107,6 +113,9 @@ export async function listImportRuns(): Promise<ImportRunDto> {
     // falls Backend kein merged liefert, default false
     merged: Boolean(r.merged ?? r.is_merged ?? false),
     inserted_rows: Number(r.inserted_rows ?? r.inserted_rows ?? 0),
+    size: Number(r.size ?? r.size ?? 0),
+    updated_rows: Number(r.updated_rows ?? r.updated_rows ?? 0),
+    deleted_rows: Number(r.deleted_rows ?? r.deleted_rows ?? 0),
   }));
 
   return {

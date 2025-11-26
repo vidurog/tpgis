@@ -99,9 +99,15 @@ export default function RunsList({
               >
                 <div className="runs__row">
                   <span className="runs__id">#{id}</span>
+                  {/* @Deprecated (shows too much info)
                   <span className="runs__meta">
                     {run.imported_at} · {run.imported_by} · {run.inserted_rows}{" "}
                     Zeilen · {run.merged ? "merged" : "not merged"}
+                  </span>
+                  */}
+                  <span className="runs__meta">
+                    {run.imported_at} · {run.imported_by} ·{" "}
+                    {run.merged ? "merged" : "not merged"}
                   </span>
                 </div>
               </li>
