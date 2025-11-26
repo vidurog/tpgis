@@ -147,7 +147,7 @@ export class CreateCoreTables1763469490481 implements MigrationInterface {
         imported_by    text          NOT NULL,
         file_name       text          NOT NULL,
         merged         boolean       DEFAULT false,
-        inserted_rows  int           NOT NULL
+        inserted_rows  int           NOT NULL,
       );
     `);
 

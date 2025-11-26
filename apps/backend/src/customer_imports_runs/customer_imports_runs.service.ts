@@ -34,14 +34,14 @@ export class CustomerImportsRunsService {
     import_id: string,
     imported_at: Date,
     imported_by: string,
-    inserted_rows: number,
+    size: number,
     file_name: string,
   ) {
     const run = await this.runRepo.create({
       import_id: import_id,
       imported_at,
       imported_by,
-      inserted_rows,
+      size,
       file_name,
     });
     await this.runRepo.save(run);
@@ -60,10 +60,11 @@ export class CustomerImportsRunsService {
     import_id: string,
     deleted_rows: number,
     updated_rows: number,
+    inserted_rows: number,
   ) {
     await this.runRepo.update(
       { import_id: import_id },
-      { merged: true, deleted_rows, updated_rows },
+      { merged: true, deleted_rows, updated_rows, inserted_rows },
     );
   }
 }

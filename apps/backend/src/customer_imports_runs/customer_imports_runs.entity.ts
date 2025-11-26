@@ -56,4 +56,7 @@ export class CustomerImportRuns {
    */
   @Column({ name: 'deleted_rows', type: 'int' })
   deleted_rows: number;
+
+  @Column({ name: 'size', type: 'int' })
+  size: number;
 }

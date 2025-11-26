@@ -131,6 +131,8 @@ export class ReportsErrorService {
   // JSON: Liste mit Sortierung + Pagination + berechneten Feldern
   // ---------------------------------------------------------------------------
   async listLatestErrors(dto: ReportsErrorsQueryDto) {
+    console.log('dto:', dto); // DEBUG
+
     // total (Count mit gleichen Filtern)
     const totalQb = this.buildBaseQuery();
     this.applyFilters(totalQb, dto);

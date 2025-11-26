@@ -19,6 +19,26 @@ export class EditImportRuns1763491737042 implements MigrationInterface {
       type: 'text',
       isNullable: true,
     });
+
+    const size: TableColumn = new TableColumn({
+      name: 'size',
+      type: 'int',
+      isNullable: false,
+      default: 0,
+    });
+    // Alter inserted_rows to be not nullable
+    await queryRunner.changeColumn(
+      'tp_gis_import.kunden_import_runs',
+      'inserted_rows',
+      new TableColumn({
+        name: 'inserted_rows',
+        type: 'int',
+        isNullable: false,
+        default: 0,
+      }),
+    );
+
+    // Add Columns
     await queryRunner.addColumn(
       'tp_gis_import.kunden_import_runs',
       deletedRows,
@@ -28,7 +48,22 @@ export class EditImportRuns1763491737042 implements MigrationInterface {
       updatedRows,
     );
     await queryRunner.addColumn('tp_gis_import.kunden_import_runs', fileName);
+    await queryRunner.addColumn('tp_gis_import.kunden_import_runs', size);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropColumn(
+      'tp_gis_import.kunden_import_runs',
+      'deleted_rows',
+    );
+    await queryRunner.dropColumn(
+      'tp_gis_import.kunden_import_runs',
+      'updated_rows',
+    );
+    await queryRunner.dropColumn(
+      'tp_gis_import.kunden_import_runs',
+      'file_name',
+    );
+    await queryRunner.dropColumn('tp_gis_import.kunden_import_runs', 'size');
+  }
 }
